@@ -2946,11 +2946,11 @@ test('uses PowerShell by default for Windows tablet lifecycle targets', () => {
 });
 
 test('validates checked-in example configurations', async () => {
-  const clawRouter = await loadWorkflowConfig('examples/sdkwork-clawrouter/sdkwork.workflow.json');
+  const cloudRouter = await loadWorkflowConfig('examples/sdkwork-cloudrouter/sdkwork.workflow.json');
   const mobile = await loadWorkflowConfig('examples/mobile-flutter/sdkwork.workflow.json');
   const tablet = await loadWorkflowConfig('examples/tablet-cross-platform/sdkwork.workflow.json');
 
-  assert.deepEqual(validateWorkflowConfig(clawRouter), []);
+  assert.deepEqual(validateWorkflowConfig(cloudRouter), []);
   assert.deepEqual(validateWorkflowConfig(mobile), []);
   assert.deepEqual(validateWorkflowConfig(tablet), []);
 });

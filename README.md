@@ -59,7 +59,7 @@ workspace dependency, an installed package, or the reusable workflow checkout.
 - `schemas/sdkwork-workflow.schema.json` - JSON Schema for `sdkwork.workflow.json`.
 - `specs/component.spec.json` - machine-readable shared framework component contract.
 - `templates/app-package.workflow.yml` - minimal workflow entrypoint for application repositories.
-- `examples/sdkwork-clawrouter` - migration example based on the original `sdkwork-clawrouter` workflow.
+- `examples/sdkwork-cloudrouter` - migration example based on the original `sdkwork-cloudrouter` workflow.
 - `examples/mobile-flutter` - mobile packaging example.
 - `tests` - Node test coverage for framework behavior.
 
@@ -457,7 +457,7 @@ Run full repository validation:
 npm run check
 ```
 
-Validate the claw-router example:
+Validate the cloud-router example:
 
 ```bash
 npm run check:example
@@ -473,7 +473,7 @@ Render release notes:
 
 ```bash
 node scripts/sdkwork-workflow.mjs changelog \
-  --config examples/sdkwork-clawrouter/sdkwork.workflow.json \
+  --config examples/sdkwork-cloudrouter/sdkwork.workflow.json \
   --version 0.3.0 \
   --release-tag v0.3.0 \
   --output tmp/release-notes.md
@@ -483,7 +483,7 @@ Render dependency refs from a local file:
 
 ```bash
 node scripts/sdkwork-workflow.mjs dependencies \
-  --config examples/sdkwork-clawrouter/sdkwork.workflow.json \
+  --config examples/sdkwork-cloudrouter/sdkwork.workflow.json \
   --dependency-refs-file refs.json \
   --json
 ```

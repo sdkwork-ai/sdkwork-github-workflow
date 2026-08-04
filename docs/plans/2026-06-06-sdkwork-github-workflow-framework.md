@@ -40,11 +40,11 @@
 
 **Files:**
 - Create: `schemas/sdkwork-workflow.schema.json`
-- Create: `examples/sdkwork-clawrouter/sdkwork.workflow.json`
+- Create: `examples/sdkwork-cloudrouter/sdkwork.workflow.json`
 - Create: `examples/mobile-flutter/sdkwork.workflow.json`
 
 - [x] Create schema v1.
-- [x] Map `sdkwork-clawrouter` workflow concepts into example config.
+- [x] Map `sdkwork-cloudrouter` workflow concepts into example config.
 - [x] Add mobile Flutter example.
 - [x] Test examples with `validateWorkflowConfig`.
 
@@ -89,7 +89,7 @@
 - Modify: `schemas/sdkwork-workflow.schema.json`
 - Modify: `.github/workflows/sdkwork-package.yml`
 - Modify: `actions/run-lifecycle/action.yml`
-- Modify: `examples/sdkwork-clawrouter/sdkwork.workflow.json`
+- Modify: `examples/sdkwork-cloudrouter/sdkwork.workflow.json`
 - Modify: `examples/mobile-flutter/sdkwork.workflow.json`
 - Modify: `tests/sdkwork-workflow.test.mjs`
 

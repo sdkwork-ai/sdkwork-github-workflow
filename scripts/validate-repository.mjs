@@ -31,7 +31,7 @@ const REQUIRED_FILES = Object.freeze([
   'scripts/sdkwork-workflow.mjs',
   'templates/app-package.workflow.yml',
   'sdkwork.app.config.json',
-  'examples/sdkwork-clawrouter/sdkwork.workflow.json',
+  'examples/sdkwork-cloudrouter/sdkwork.workflow.json',
   'examples/mobile-flutter/sdkwork.workflow.json',
   'examples/tablet-cross-platform/sdkwork.workflow.json',
   'README.md',
@@ -254,7 +254,7 @@ function validateRootAppManifest(issues) {
 
 async function validateExamples(issues) {
   for (const configPath of [
-    'examples/sdkwork-clawrouter/sdkwork.workflow.json',
+    'examples/sdkwork-cloudrouter/sdkwork.workflow.json',
     'examples/mobile-flutter/sdkwork.workflow.json',
     'examples/tablet-cross-platform/sdkwork.workflow.json',
   ]) {
