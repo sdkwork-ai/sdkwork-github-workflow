@@ -2935,7 +2935,7 @@ async function createApplicationPackageWorkflow({ frameworkRef = 'v1' } = {}) {
   const templatePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'templates', 'app-package.workflow.yml');
   const template = await readFile(templatePath, 'utf8');
   return template
-    .replaceAll('Sdkwork-Cloud/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1', `Sdkwork-Cloud/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@${frameworkRef}`)
+    .replaceAll('sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1', `sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@${frameworkRef}`)
     .replaceAll('framework_ref: v1', `framework_ref: ${frameworkRef}`);
 }
 

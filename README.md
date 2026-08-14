@@ -72,7 +72,7 @@ node scripts/sdkwork-workflow.mjs init-app \
   --root ../my-app \
   --app-id my-app \
   --app-name "My App" \
-  --repository Sdkwork-Cloud/my-app \
+  --repository sdkwork-ai/my-app \
   --profiles server,desktop,tablet \
   --framework-ref v1
 ```
@@ -99,7 +99,7 @@ Add `sdkwork.workflow.json` to the application repository:
   "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
   "app": {
     "id": "my-app",
-    "repository": "Sdkwork-Cloud/my-app",
+    "repository": "sdkwork-ai/my-app",
     "sourcePath": "."
   },
   "release": {
@@ -299,7 +299,7 @@ on:
 
 jobs:
   package:
-    uses: Sdkwork-Cloud/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1
+    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1
     with:
       config_path: sdkwork.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
@@ -419,7 +419,7 @@ Dependencies are declared in `sdkwork.workflow.json`:
   "dependencies": [
     {
       "id": "sdkwork-appbase",
-      "repository": "Sdkwork-Cloud/sdkwork-appbase",
+      "repository": "sdkwork-ai/sdkwork-appbase",
       "refInput": "SDKWORK_APPBASE_REF",
       "path": "apps/sdkwork-appbase",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN",
@@ -494,7 +494,7 @@ Generate an application bootstrap:
 node scripts/sdkwork-workflow.mjs init-app \
   --root ../my-app \
   --app-id my-app \
-  --repository Sdkwork-Cloud/my-app \
+  --repository sdkwork-ai/my-app \
   --profiles server,tablet
 ```
 

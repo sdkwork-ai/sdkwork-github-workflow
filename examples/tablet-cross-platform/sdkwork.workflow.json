@@ -4,7 +4,7 @@
   "app": {
     "id": "sdkwork-tablet-example",
     "name": "SDKWork Tablet Example",
-    "repository": "Sdkwork-Cloud/sdkwork-tablet-example",
+    "repository": "sdkwork-ai/sdkwork-tablet-example",
     "sourcePath": "."
   },
   "release": {

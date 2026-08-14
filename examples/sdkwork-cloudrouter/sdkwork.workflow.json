@@ -4,7 +4,7 @@
   "app": {
     "id": "sdkwork-cloudrouter",
     "name": "SDKWork Cloud Router",
-    "repository": "Sdkwork-Cloud/sdkwork-cloudrouter",
+    "repository": "sdkwork-ai/sdkwork-cloudrouter",
     "sourcePath": "apps/sdkwork-cloudrouter"
   },
   "release": {
@@ -19,35 +19,35 @@
   "dependencies": [
     {
       "id": "sdkwork-appbase",
-      "repository": "Sdkwork-Cloud/sdkwork-appbase",
+      "repository": "sdkwork-ai/sdkwork-appbase",
       "refInput": "SDKWORK_APPBASE_REF",
       "path": "apps/sdkwork-appbase",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
       "id": "sdkwork-core",
-      "repository": "Sdkwork-Cloud/sdkwork-core",
+      "repository": "sdkwork-ai/sdkwork-core",
       "refInput": "SDKWORK_CORE_REF",
       "path": "apps/sdkwork-core",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
       "id": "sdkwork-ui",
-      "repository": "Sdkwork-Cloud/sdkwork-ui",
+      "repository": "sdkwork-ai/sdkwork-ui",
       "refInput": "SDKWORK_UI_REF",
       "path": "apps/sdkwork-ui",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
       "id": "sdkwork-im-sdk",
-      "repository": "Sdkwork-Cloud/sdkwork-im-sdk",
+      "repository": "sdkwork-ai/sdkwork-im-sdk",
       "refInput": "SDKWORK_IM_SDK_REF",
       "path": "apps/sdkwork-im/sdks/sdkwork-im-sdk",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"
     },
     {
       "id": "sdkwork-sdk-generator",
-      "repository": "Sdkwork-Cloud/sdkwork-sdk-generator",
+      "repository": "sdkwork-ai/sdkwork-sdk-generator",
       "refInput": "SDKWORK_SDK_GENERATOR_REF",
       "path": "sdk/sdkwork-sdk-generator",
       "tokenSecret": "SDKWORK_RELEASE_TOKEN"

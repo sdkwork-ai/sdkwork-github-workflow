@@ -17,7 +17,7 @@ The `sdkwork-cloudrouter` workflow demonstrates the required capability set, but
 Use an independent reusable workflow repository:
 
 - Application repositories own `sdkwork.workflow.json`.
-- Application repositories keep a thin workflow entrypoint that calls `Sdkwork-Cloud/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1`.
+- Application repositories keep a thin workflow entrypoint that calls `sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1`.
 - This framework owns reusable orchestration and composite actions.
 - Application-specific build/package/validate commands are declared as lifecycle steps.
 

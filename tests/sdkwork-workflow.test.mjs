@@ -37,7 +37,7 @@ test('validates the minimal cross-platform workflow config', async () => {
     app: {
       id: 'demo-router',
       name: 'Demo Router',
-      repository: 'Sdkwork-Cloud/demo-router',
+      repository: 'sdkwork-ai/demo-router',
       sourcePath: '.',
     },
     release: {
@@ -47,7 +47,7 @@ test('validates the minimal cross-platform workflow config', async () => {
     dependencies: [
       {
         id: 'sdkwork-appbase',
-        repository: 'Sdkwork-Cloud/sdkwork-appbase',
+        repository: 'sdkwork-ai/sdkwork-appbase',
         refInput: 'sdkwork_appbase_ref',
         path: 'apps/sdkwork-appbase',
       },
@@ -1633,7 +1633,7 @@ test('rejects unsafe dependency refs and unsupported per-dependency token secret
     dependencies: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         ref: '../main',
         refInput: 'SDKWORK_CORE_REF',
         tokenSecret: 'OTHER_TOKEN',
@@ -1667,12 +1667,12 @@ test('rejects dependency checkout paths that collide with application or framewo
     dependencies: [
       {
         id: 'app-source',
-        repository: 'Sdkwork-Cloud/app-source',
+        repository: 'sdkwork-ai/app-source',
         path: 'apps/app',
       },
       {
         id: 'framework',
-        repository: 'Sdkwork-Cloud/framework',
+        repository: 'sdkwork-ai/framework',
         path: '.sdkwork/github-workflow',
       },
     ],
@@ -1701,7 +1701,7 @@ test('rejects dependency checkout paths that collide with application or framewo
     dependencies: [
       {
         id: 'root',
-        repository: 'Sdkwork-Cloud/root',
+        repository: 'sdkwork-ai/root',
         path: '.',
       },
     ],
@@ -1721,7 +1721,7 @@ test('rejects explicit dependency checkout path when it overlaps application sou
     dependencies: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         path: 'dependencies/sdkwork-core',
       },
     ],
@@ -1752,7 +1752,7 @@ test('plans default dependency checkout as a runner-local sibling repository', (
     dependencies: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         ref: 'main',
       },
     ],
@@ -1785,14 +1785,14 @@ test('plans verification dependencies without treating them as runtime release d
     dependencies: [
       {
         id: 'sdkwork-appbase',
-        repository: 'Sdkwork-Cloud/sdkwork-appbase',
+        repository: 'sdkwork-ai/sdkwork-appbase',
         ref: 'main',
       },
     ],
     verificationDependencies: [
       {
         id: 'sdkwork-im',
-        repository: 'Sdkwork-Cloud/sdkwork-im',
+        repository: 'sdkwork-ai/sdkwork-im',
         refInput: 'SDKWORK_IM_REF',
         tokenSecret: 'SDKWORK_RELEASE_TOKEN',
         purpose: 'boundary contract tests',
@@ -1818,7 +1818,7 @@ test('plans verification dependencies without treating them as runtime release d
     include: [
       {
         id: 'sdkwork-appbase',
-        repository: 'Sdkwork-Cloud/sdkwork-appbase',
+        repository: 'sdkwork-ai/sdkwork-appbase',
         ref: 'main',
         path: '../sdkwork-appbase',
         tokenSecret: null,
@@ -1828,7 +1828,7 @@ test('plans verification dependencies without treating them as runtime release d
       },
       {
         id: 'sdkwork-im',
-        repository: 'Sdkwork-Cloud/sdkwork-im',
+        repository: 'sdkwork-ai/sdkwork-im',
         ref: 'boundary-ref',
         path: '../sdkwork-im',
         tokenSecret: 'SDKWORK_RELEASE_TOKEN',
@@ -2122,7 +2122,7 @@ test('creates dependency plan from generic ref mapping', () => {
     dependencies: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         refInput: 'SDKWORK_CORE_REF',
         path: 'apps/sdkwork-core',
         submodules: 'recursive',
@@ -2147,7 +2147,7 @@ test('creates dependency plan from generic ref mapping', () => {
     include: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         ref: 'abc123',
         path: 'apps/sdkwork-core',
         tokenSecret: null,
@@ -2171,7 +2171,7 @@ test('loads dependency refs from a JSON file in CLI mode', async () => {
     dependencies: [
       {
         id: 'sdkwork-core',
-        repository: 'Sdkwork-Cloud/sdkwork-core',
+        repository: 'sdkwork-ai/sdkwork-core',
         refInput: 'SDKWORK_CORE_REF',
       },
     ],
@@ -2236,7 +2236,7 @@ test('initializes an application workflow without overwriting existing files', a
     root,
     appId: 'demo-app',
     appName: 'Demo App',
-    repository: 'Sdkwork-Cloud/demo-app',
+    repository: 'sdkwork-ai/demo-app',
     profiles: ['server', 'desktop', 'tablet'],
     frameworkRef: 'v1',
   });
@@ -2255,7 +2255,7 @@ test('initializes an application workflow without overwriting existing files', a
   assert.ok(workflow.includes("package_version: ${{ github.event.inputs.package_version || github.event.release.tag_name || github.ref_name }}"));
   assert.ok(workflow.includes("variant: ${{ github.event.inputs.variant || 'all' }}"));
   assert.ok(workflow.includes("deploy: ${{ github.event.inputs.deploy == 'true' || github.event_name == 'release' }}"));
-  assert.ok(workflow.includes('Sdkwork-Cloud/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1'));
+  assert.ok(workflow.includes('sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1'));
   assert.ok(workflow.includes('dependency_refs_json: >-'));
   assert.ok(workflow.includes('SDKWORK_APPBASE_REF'));
 
@@ -2263,7 +2263,7 @@ test('initializes an application workflow without overwriting existing files', a
     () => initApplicationWorkflow({
       root,
       appId: 'demo-app',
-      repository: 'Sdkwork-Cloud/demo-app',
+      repository: 'sdkwork-ai/demo-app',
       profiles: ['server'],
     }),
     /already exists/,
@@ -2278,7 +2278,7 @@ test('init-app generates standard linux native and windows installer package tar
   await initApplicationWorkflow({
     root,
     appId: 'standard-targets',
-    repository: 'Sdkwork-Cloud/standard-targets',
+    repository: 'sdkwork-ai/standard-targets',
     profiles: ['server', 'desktop'],
     frameworkRef: 'v1',
   });
@@ -2305,7 +2305,7 @@ test('init-app generates shell-neutral lifecycle placeholders', async () => {
   await initApplicationWorkflow({
     root,
     appId: 'shell-neutral',
-    repository: 'Sdkwork-Cloud/shell-neutral',
+    repository: 'sdkwork-ai/shell-neutral',
     profiles: ['server', 'desktop'],
     frameworkRef: 'v1',
   });
@@ -2330,7 +2330,7 @@ test('init-app renders the checked-in application workflow template', async () =
   await initApplicationWorkflow({
     root,
     appId: 'template-demo',
-    repository: 'Sdkwork-Cloud/template-demo',
+    repository: 'sdkwork-ai/template-demo',
     profiles: ['server'],
     frameworkRef: 'v1',
   });
@@ -2363,7 +2363,7 @@ test('CLI init-app does not require an existing workflow config', async () => {
       '--app-name',
       'CLI Demo',
       '--repository',
-      'Sdkwork-Cloud/cli-demo',
+      'sdkwork-ai/cli-demo',
       '--profiles',
       'server,tablet',
       '--json',
@@ -2388,7 +2388,7 @@ test('init-app rejects invalid application identity before writing files', async
     () => initApplicationWorkflow({
       root,
       appId: 'Invalid App',
-      repository: 'Sdkwork-Cloud/demo-app',
+      repository: 'sdkwork-ai/demo-app',
     }),
     /appId must match/,
   );

@@ -4,7 +4,7 @@
   "app": {
     "id": "sdkwork-mobile-example",
     "name": "SDKWork Mobile Example",
-    "repository": "Sdkwork-Cloud/sdkwork-mobile-example",
+    "repository": "sdkwork-ai/sdkwork-mobile-example",
     "sourcePath": "."
   },
   "release": {

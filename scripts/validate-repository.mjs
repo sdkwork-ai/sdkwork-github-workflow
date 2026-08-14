@@ -284,7 +284,7 @@ async function validateGenerator(issues) {
     await initApplicationWorkflow({
       root,
       appId: 'repository-validate-app',
-      repository: 'Sdkwork-Cloud/repository-validate-app',
+      repository: 'sdkwork-ai/repository-validate-app',
       profiles: ['server', 'tablet'],
     });
     const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
