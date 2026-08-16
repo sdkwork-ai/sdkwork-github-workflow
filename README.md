@@ -35,6 +35,11 @@ node "$SDKWORK_WORKFLOW_CLI" evidence:create \
 Lifecycle steps receive `SDKWORK_WORKFLOW_CLI` and the newline-delimited
 `SDKWORK_ARTIFACT_EVIDENCE_PATHS`, so the same hook works from a sibling
 workspace dependency, an installed package, or the reusable workflow checkout.
+Signing hooks receive `SDKWORK_RELEASE_SIGNING_PRIVATE_KEY` and its optional
+password. Container publication hooks receive
+`SDKWORK_CONTAINER_REGISTRY_USERNAME` and
+`SDKWORK_CONTAINER_REGISTRY_PASSWORD`; all four values come from caller or
+protected-environment secrets and must never be placed in workflow config.
 
 ## Design Goals
 

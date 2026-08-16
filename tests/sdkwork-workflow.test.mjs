@@ -663,6 +663,47 @@ test('creates evidence from artifact bytes and rejects stale version, commit, or
   );
 });
 
+test('OCI evidence binds the remote repository digest instead of image manifest bytes', async () => {
+  const root = 'tmp/tests/sdkwork-workflow/oci-evidence';
+  const artifactPath = `${root}/container-image.json`;
+  const evidencePath = `${root}/container-evidence.json`;
+  const repoDigest = `registry.sdkwork.com/demo@sha256:${'a'.repeat(64)}`;
+  const matrixItem = {
+    id: 'container-x64-standalone-container-oci',
+    packageId: 'container-x64-standalone-container-oci',
+    profileBinding: 'fixed',
+    deploymentProfile: 'standalone',
+    runtimeTarget: 'container',
+  };
+  await mkdir(root, { recursive: true });
+  await writeFile(artifactPath, JSON.stringify({ repoDigest }), 'utf8');
+
+  const created = await createArtifactEvidence({
+    outputPath: evidencePath,
+    artifactPath,
+    artifactKind: 'oci-image',
+    matrixItem,
+    version: '1.2.3',
+    sourceCommit: '0123456789abcdef0123456789abcdef01234567',
+    sbom: 'container.cdx.json',
+    provenance: 'container.intoto.jsonl',
+    signature: 'container.sig',
+  });
+  assert.equal(created.evidence.artifactLocator, repoDigest);
+  assert.equal(created.evidence.digest, `sha256:${'a'.repeat(64)}`);
+  assert.notEqual(created.evidence.digest, await import('node:crypto').then(({ createHash }) =>
+    `sha256:${createHash('sha256').update(JSON.stringify({ repoDigest })).digest('hex')}`));
+  await verifyArtifactEvidence(evidencePath, matrixItem, { artifactRoot: '.' });
+
+  await writeFile(artifactPath, JSON.stringify({
+    repoDigest: `registry.sdkwork.com/demo@sha256:${'b'.repeat(64)}`,
+  }), 'utf8');
+  await assert.rejects(
+    () => verifyArtifactEvidence(evidencePath, matrixItem, { artifactRoot: '.' }),
+    /locator does not match image manifest repoDigest/u,
+  );
+});
+
 test('evidence:create CLI writes evidence that the verify CLI accepts', async () => {
   const root = 'tmp/tests/sdkwork-workflow/evidence-cli';
   const configPath = `${root}/sdkwork.workflow.json`;
@@ -3226,6 +3267,19 @@ test('reusable workflow gates publication policies and passes deployment context
   assert.match(workflow, /inputs\.deploy && \(!inputs\.upload_artifact \|\| !fromJson\(steps\.matrix\.outputs\.summary_json\)\.publish\.workflowArtifact\)/u);
   assert.match(workflow, /name: Require a selected deployment/u);
   assert.match(workflow, /inputs\.deploy && steps\.deployments\.outputs\.deployment_count == '0'/u);
+});
+
+test('reusable workflow exposes signing and container registry credentials only as secrets', async () => {
+  const workflow = await readFile(path.resolve('.github/workflows/sdkwork-package.yml'), 'utf8');
+  for (const name of [
+    'SDKWORK_RELEASE_SIGNING_PRIVATE_KEY',
+    'SDKWORK_RELEASE_SIGNING_PRIVATE_KEY_PASSWORD',
+    'SDKWORK_CONTAINER_REGISTRY_USERNAME',
+    'SDKWORK_CONTAINER_REGISTRY_PASSWORD',
+  ]) {
+    assert.match(workflow, new RegExp(`secrets\\.${name}`, 'u'));
+  }
+  assert.doesNotMatch(workflow, /inputs\.SDKWORK_CONTAINER_REGISTRY_PASSWORD/u);
 });
 
 test('run-lifecycle action passes deployment profile and runtime target filters through environment variables', async () => {

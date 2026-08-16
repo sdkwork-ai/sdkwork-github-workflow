@@ -103,6 +103,12 @@ on:
       SDKWORK_RELEASE_SIGNING_PRIVATE_KEY_PASSWORD:
         description: Optional password for the detached-signature private key.
         required: false
+      SDKWORK_CONTAINER_REGISTRY_USERNAME:
+        description: Username used by application container publication lifecycle hooks.
+        required: false
+      SDKWORK_CONTAINER_REGISTRY_PASSWORD:
+        description: Password or token used by application container publication lifecycle hooks.
+        required: false
       SDKWORK_ANDROID_KEYSTORE_BASE64:
         description: Base64-encoded Android release keystore.
         required: false
@@ -278,6 +284,8 @@ jobs:
       GH_TOKEN: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
       SDKWORK_RELEASE_SIGNING_PRIVATE_KEY: ${{ secrets.SDKWORK_RELEASE_SIGNING_PRIVATE_KEY }}
       SDKWORK_RELEASE_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.SDKWORK_RELEASE_SIGNING_PRIVATE_KEY_PASSWORD }}
+      SDKWORK_CONTAINER_REGISTRY_USERNAME: ${{ secrets.SDKWORK_CONTAINER_REGISTRY_USERNAME }}
+      SDKWORK_CONTAINER_REGISTRY_PASSWORD: ${{ secrets.SDKWORK_CONTAINER_REGISTRY_PASSWORD }}
       SDKWORK_ANDROID_KEYSTORE_BASE64: ${{ secrets.SDKWORK_ANDROID_KEYSTORE_BASE64 }}
       SDKWORK_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.SDKWORK_ANDROID_KEYSTORE_PASSWORD }}
       SDKWORK_ANDROID_KEY_ALIAS: ${{ secrets.SDKWORK_ANDROID_KEY_ALIAS }}

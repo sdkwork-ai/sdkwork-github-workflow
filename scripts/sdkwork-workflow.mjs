@@ -263,7 +263,7 @@ Commands:
   changelog      Render release changelog / GitHub Release notes.
   lifecycle      Render one lifecycle phase execution plan.
   evidence       Verify artifact evidence against one selected package target.
-  evidence:create Create artifact evidence from a packaged file and references.
+  evidence:create Create artifact evidence from a packaged file or OCI image manifest and references.
   init-app       Generate sdkwork.workflow.json and package workflow for an app.
 
 Options:
@@ -291,6 +291,8 @@ Options:
   --artifact <path>      Primary packaged artifact path relative to --artifact-root.
   --artifact-root <path> Root directory containing the packaged artifact.
   --artifact-id <value> Stable artifact identity for evidence:create.
+  --artifact-kind <value> file (default) or oci-image.
+  --artifact-locator <value> Immutable repository@sha256 locator for an OCI image.
   --sbom <value>         SBOM reference for evidence:create.
   --provenance <value>   Provenance reference for evidence:create.
   --signature <value>    Signature reference for evidence:create.
@@ -340,6 +342,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     artifactPath: null,
     artifactRoot: '.',
     artifactId: null,
+    artifactKind: null,
+    artifactLocator: null,
     sbomReference: null,
     provenanceReference: null,
     signatureReference: null,
@@ -439,6 +443,14 @@ function parseArgs(argv = process.argv.slice(2)) {
         break;
       case '--artifact-id':
         settings.artifactId = requireValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--artifact-kind':
+        settings.artifactKind = requireValue(argv, index, arg);
+        index += 1;
+        break;
+      case '--artifact-locator':
+        settings.artifactLocator = requireValue(argv, index, arg);
         index += 1;
         break;
       case '--sbom':
@@ -1793,6 +1805,18 @@ function validateArtifactEvidenceDocument(evidence, matrixItem, {
   if (typeof evidence.digest === 'string' && !/^sha256:[a-f0-9]{64}$/u.test(evidence.digest)) {
     issues.push('artifact evidence digest must use sha256:<64 lowercase hex characters>');
   }
+  const artifactKind = evidence.artifactKind ?? 'file';
+  if (!['file', 'oci-image'].includes(artifactKind)) {
+    issues.push('artifact evidence artifactKind must be file or oci-image');
+  }
+  if (artifactKind === 'oci-image') {
+    const match = /^([^\s@]+)@(sha256:[a-f0-9]{64})$/u.exec(String(evidence.artifactLocator ?? ''));
+    if (!match) issues.push('OCI artifact evidence requires an immutable repository@sha256 artifactLocator');
+    if (match && evidence.digest !== match[2]) issues.push('OCI artifact evidence digest must match artifactLocator');
+    if (evidence.runtimeTarget !== 'container') issues.push('OCI artifact evidence runtimeTarget must be container');
+  } else if (evidence.artifactLocator !== undefined) {
+    issues.push('file artifact evidence must not declare artifactLocator');
+  }
   if (typeof evidence.version === 'string'
     && !/^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/u.test(evidence.version)) {
     issues.push('artifact evidence version must use SemVer');
@@ -1883,9 +1907,21 @@ async function verifyArtifactEvidence(filePath, matrixItem, options = {}) {
     if (!existsSync(artifactFile)) {
       issues.push(`artifact evidence artifactPath does not exist: ${artifactFile}`);
     } else {
-      const actualDigest = await sha256File(artifactFile);
-      if (actualDigest !== evidence.digest) {
-        issues.push('artifact evidence digest does not match packaged artifact bytes');
+      if ((evidence.artifactKind ?? 'file') === 'oci-image') {
+        let imageManifest;
+        try {
+          imageManifest = JSON.parse(await readFile(artifactFile, 'utf8'));
+        } catch (error) {
+          issues.push(`OCI artifact evidence manifest is not valid JSON: ${error.message}`);
+        }
+        if (imageManifest && imageManifest.repoDigest !== evidence.artifactLocator) {
+          issues.push('OCI artifact evidence locator does not match image manifest repoDigest');
+        }
+      } else {
+        const actualDigest = await sha256File(artifactFile);
+        if (actualDigest !== evidence.digest) {
+          issues.push('artifact evidence digest does not match packaged artifact bytes');
+        }
       }
     }
   }
@@ -1898,6 +1934,8 @@ async function createArtifactEvidence({
   artifactPath,
   artifactRoot = '.',
   artifactId = null,
+  artifactKind = 'file',
+  artifactLocator = null,
   version,
   sourceCommit,
   matrixItem,
@@ -1914,10 +1952,30 @@ async function createArtifactEvidence({
   }
   const artifactFile = resolveArtifactFile(artifactRoot, artifactPath);
   if (!existsSync(artifactFile)) throw new Error(`packaged artifact not found: ${artifactFile}`);
+  if (!['file', 'oci-image'].includes(artifactKind)) throw new Error('--artifact-kind must be file or oci-image');
+  let digest;
+  if (artifactKind === 'oci-image') {
+    let imageManifest;
+    try {
+      imageManifest = JSON.parse(await readFile(artifactFile, 'utf8'));
+    } catch (error) {
+      throw new Error(`OCI artifact manifest is not valid JSON: ${error.message}`);
+    }
+    artifactLocator = artifactLocator || imageManifest.repoDigest;
+    const match = /^([^\s@]+)@(sha256:[a-f0-9]{64})$/u.exec(String(artifactLocator ?? ''));
+    if (!match) throw new Error('OCI artifact evidence requires --artifact-locator or manifest repoDigest with repository@sha256');
+    if (imageManifest.repoDigest !== artifactLocator) throw new Error('OCI artifact locator does not match image manifest repoDigest');
+    digest = match[2];
+  } else {
+    if (artifactLocator !== null && artifactLocator !== undefined) throw new Error('file artifact evidence must not declare --artifact-locator');
+    digest = await sha256File(artifactFile);
+  }
   const evidence = {
-    artifactId: artifactId || `${matrixItem.packageId}:${artifactPath}`,
+    artifactId: artifactId || (artifactKind === 'oci-image' ? artifactLocator : `${matrixItem.packageId}:${artifactPath}`),
+    artifactKind,
     artifactPath,
-    digest: await sha256File(artifactFile),
+    ...(artifactKind === 'oci-image' ? { artifactLocator } : {}),
+    digest,
     version,
     sourceCommit,
     packageId: matrixItem.packageId,
@@ -3090,6 +3148,8 @@ async function main(argv = process.argv.slice(2), env = process.env) {
           artifactPath: settings.artifactPath || env.SDKWORK_PACKAGE_ARTIFACT_PATH || matrixItem.artifactPath,
           artifactRoot: settings.artifactRoot,
           artifactId: settings.artifactId,
+          artifactKind: settings.artifactKind || env.SDKWORK_ARTIFACT_KIND || 'file',
+          artifactLocator: settings.artifactLocator || env.SDKWORK_ARTIFACT_LOCATOR,
           version,
           sourceCommit,
           matrixItem,
