@@ -10,3 +10,5 @@ sdkwork_api_github_workflow_assembly = { path = "crates/sdkwork-api-github-workf
 
 sdkwork_web_bootstrap = { path = "../sdkwork-web-framework/crates/sdkwork-web-bootstrap", package = "sdkwork-web-bootstrap" }
 
+
+sdkwork_web_core = { path = "../sdkwork-web-framework/crates/sdkwork-web-core", package = "sdkwork-web-core" }

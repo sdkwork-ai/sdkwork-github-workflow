@@ -68,7 +68,7 @@
       },
       "platform": [],
       "metadata": {
-        "generatedBy": "apps/scripts/initialize-sdkwork-app-standard-v3.mjs"
+        "generatedPlaceholder": true
       }
     },
     "screenshots": [
@@ -179,7 +179,10 @@
           "enabled": true,
           "metadata": {},
           "checksumAlgorithm": "SHA-256",
-          "checksum": "38a2adc538a2adc538a2adc538a2adc538a2adc538a2adc538a2adc538a2adc5"
+          "checksum": "38a2adc538a2adc538a2adc538a2adc538a2adc538a2adc538a2adc538a2adc5",
+          "profileBinding": "fixed",
+          "targetPlatform": "web",
+          "clientArchitecture": "pc-web"
         },
         {
           "id": "windows-x64-standalone-desktop-zip",
@@ -194,7 +197,10 @@
           "deploymentProfile": "standalone",
           "runtimeTarget": "desktop",
           "checksumAlgorithm": "SHA-256",
-          "checksum": "11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f"
+          "checksum": "11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f11709f3f",
+          "profileBinding": "fixed",
+          "targetPlatform": "windows",
+          "clientArchitecture": "tauri"
         },
         {
           "id": "macos-universal-standalone-desktop-dmg",
@@ -209,7 +215,10 @@
           "deploymentProfile": "standalone",
           "runtimeTarget": "desktop",
           "checksumAlgorithm": "SHA-256",
-          "checksum": "d77e972fd77e972fd77e972fd77e972fd77e972fd77e972fd77e972fd77e972f"
+          "checksum": "d77e972fd77e972fd77e972fd77e972fd77e972fd77e972fd77e972fd77e972f",
+          "profileBinding": "fixed",
+          "targetPlatform": "macos",
+          "clientArchitecture": "tauri"
         },
         {
           "id": "linux-x64-standalone-desktop-appimage",
@@ -228,7 +237,10 @@
           "deploymentProfile": "standalone",
           "runtimeTarget": "desktop",
           "checksumAlgorithm": "SHA-256",
-          "checksum": "d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0"
+          "checksum": "d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0d7744cb0",
+          "profileBinding": "fixed",
+          "targetPlatform": "linux",
+          "clientArchitecture": "tauri"
         }
       ],
       "metadata": {
@@ -285,6 +297,5 @@
   "metadata": {
     "standardOwner": "sdkwork-platform",
     "initializedAt": "2026-05-07T00:00:00Z"
-  },
-  "sdkDependencies": []
+  }
 }

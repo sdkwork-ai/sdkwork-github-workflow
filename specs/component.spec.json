@@ -42,6 +42,7 @@
   ],
   "contracts": {
     "publicExports": ["."],
+    "sdkDependencies": [],
     "runtimeEntrypoints": ["sdkwork-workflow"],
     "routeManifest": null,
     "sdkClients": [],
