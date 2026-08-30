@@ -13,4 +13,3 @@ axum = "0.8"
 tokio = { version = "1.48", features = ["macros", "rt-multi-thread"] }
 sdkwork_web_bootstrap = { workspace = true }
 sdkwork_web_core = { workspace = true }
-sdkwork_web_bootstrap.workspace = true
