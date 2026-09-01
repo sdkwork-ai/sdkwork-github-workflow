@@ -165,7 +165,7 @@ jobs:
 
       - id: validate
         name: Validate workflow config
-        uses: ./actions/validate-config
+        uses: ./.sdkwork/github-workflow/actions/validate-config
         with:
           config-path: ${{ inputs.config_path }}
 
@@ -309,18 +309,18 @@ jobs:
           token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
 
       - name: Checkout declared dependencies
-        uses: ./actions/checkout-dependencies
+        uses: ./.sdkwork/github-workflow/actions/checkout-dependencies
         with:
           dependencies-json: ${{ needs.plan.outputs.dependencies }}
           token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
 
       - name: Set up declared toolchains
-        uses: ./actions/setup-toolchains
+        uses: ./.sdkwork/github-workflow/actions/setup-toolchains
         with:
           config-path: ${{ inputs.config_path }}
 
       - name: Preflight
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: preflight
@@ -338,7 +338,7 @@ jobs:
           deploy-lifecycle: ${{ matrix.lifecycle }}
 
       - name: Install
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: install
@@ -353,7 +353,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Build
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: build
@@ -368,7 +368,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Stage
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: stage
@@ -383,7 +383,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Package
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: package
@@ -398,7 +398,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Sign artifacts
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: sign
@@ -413,7 +413,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Generate SBOM
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: sbom
@@ -428,7 +428,7 @@ jobs:
           release-tag: ${{ inputs.tag || github.ref_name }}
 
       - name: Validate artifacts
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: validate
@@ -528,7 +528,7 @@ jobs:
 
       - name: Upload assets to GitHub Release
         if: ${{ inputs.publish_release && matrix.deployable && fromJson(needs.plan.outputs.summary_json).publish.githubRelease && !fromJson(needs.plan.outputs.summary_json).publish.aggregateRelease }}
-        uses: ./actions/publish-release
+        uses: ./.sdkwork/github-workflow/actions/publish-release
         with:
           tag: ${{ inputs.tag || github.ref_name }}
           repository: ${{ github.repository }}
@@ -575,7 +575,7 @@ jobs:
           token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
 
       - name: Set up declared toolchains
-        uses: ./actions/setup-toolchains
+        uses: ./.sdkwork/github-workflow/actions/setup-toolchains
         with:
           config-path: ${{ inputs.config_path }}
 
@@ -587,7 +587,7 @@ jobs:
           merge-multiple: true
 
       - name: Run aggregate publish lifecycle
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: publish
@@ -633,7 +633,7 @@ jobs:
             --github-output
 
       - name: Upload aggregate assets to GitHub Release
-        uses: ./actions/publish-release
+        uses: ./.sdkwork/github-workflow/actions/publish-release
         with:
           tag: ${{ inputs.tag || github.ref_name }}
           repository: ${{ github.repository }}
@@ -695,7 +695,7 @@ jobs:
           token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
 
       - name: Set up declared toolchains
-        uses: ./actions/setup-toolchains
+        uses: ./.sdkwork/github-workflow/actions/setup-toolchains
         with:
           config-path: ${{ inputs.config_path }}
 
@@ -739,7 +739,7 @@ jobs:
             --artifact-evidence "${SDKWORK_ARTIFACT_EVIDENCE_INPUT}"
 
       - name: Run deployment lifecycle
-        uses: ./actions/run-lifecycle
+        uses: ./.sdkwork/github-workflow/actions/run-lifecycle
         with:
           config-path: ${{ inputs.config_path }}
           phase: ${{ matrix.lifecycle }}
