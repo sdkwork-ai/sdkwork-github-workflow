@@ -237,7 +237,7 @@ jobs:
             --github-output
 
       - name: Require package artifacts for deployment
-        if: ${{ inputs.deploy && (!inputs.upload_artifact || !fromJson(steps.matrix.outputs.summary_json).publish.workflowArtifact) }}
+        if: ${{ inputs.deploy && (!inputs.upload_artifact || !fromJson(steps.plan.outputs.summary_json).publish.workflowArtifact) }}
         shell: bash
         run: |
           echo "Deployment requires workflow artifact upload from the selected package jobs." >&2
@@ -251,7 +251,7 @@ jobs:
           exit 1
 
       - name: Require package artifacts for aggregate release
-        if: ${{ inputs.publish_release && fromJson(steps.matrix.outputs.summary_json).publish.aggregateRelease && (!inputs.upload_artifact || !fromJson(steps.matrix.outputs.summary_json).publish.workflowArtifact) }}
+        if: ${{ inputs.publish_release && fromJson(steps.plan.outputs.summary_json).publish.aggregateRelease && (!inputs.upload_artifact || !fromJson(steps.plan.outputs.summary_json).publish.workflowArtifact) }}
         shell: bash
         run: |
           echo "Aggregate release requires workflow artifact upload from package jobs." >&2
