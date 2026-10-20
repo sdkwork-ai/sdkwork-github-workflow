@@ -40,11 +40,44 @@ runs:
         if (-not $repo) {
           throw "Release repository is required"
         }
+        # PowerShell has no globstar: `Get-ChildItem -Path dir/**/*` matches
+        # nothing, so the framework's default aggregate glob
+        # (`release-assets/**/*`) would silently upload zero assets. Expand a
+        # `**` glob by recursing from its literal prefix and matching the
+        # remaining pattern against the workdir-relative path.
+        function Resolve-ReleaseFiles([string]$glob) {
+          $normalized = $glob.Replace('\', '/')
+          if (-not $normalized.Contains('**')) {
+            return Get-ChildItem -Path $glob -File -ErrorAction SilentlyContinue
+          }
+          $prefix = $normalized.Substring(0, $normalized.IndexOf('**')).TrimEnd('/')
+          if (-not $prefix) { $prefix = '.' }
+          $globstarToken = [string][char]1
+          $regex = $normalized -replace '([.^$+{}()\[\]|\\])', '\$1'
+          $regex = $regex -replace '\*\*', $globstarToken
+          $regex = $regex -replace '\*', '[^/]*'
+          $regex = $regex -replace '\?', '[^/]'
+          $regex = $regex -replace [regex]::Escape($globstarToken), '.*'
+          $regex = '^' + $regex + '$'
+          $cwd = (Get-Location).Path.Replace('\', '/').TrimEnd('/')
+          return Get-ChildItem -LiteralPath $prefix -File -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object {
+              $full = $_.FullName.Replace('\', '/')
+              $relative = if ($full.StartsWith($cwd + '/')) { $full.Substring($cwd.Length + 1) } else { $full }
+              if ($relative -match $regex) { $_ }
+            }
+        }
         $files = @()
+        $seen = @{}
         $env:SDKWORK_RELEASE_FILES -split "`n" | ForEach-Object {
           $glob = $_.Trim()
           if ($glob) {
-            $files += Get-ChildItem -Path $glob -File -ErrorAction SilentlyContinue
+            foreach ($file in Resolve-ReleaseFiles $glob) {
+              if (-not $seen.ContainsKey($file.FullName)) {
+                $seen[$file.FullName] = $true
+                $files += $file
+              }
+            }
           }
         }
         if ($files.Count -eq 0) {
