@@ -48,7 +48,7 @@ runs:
         function Resolve-ReleaseFiles([string]$glob) {
           $normalized = $glob.Replace('\', '/')
           if (-not $normalized.Contains('**')) {
-            return Get-ChildItem -Path $glob -File -ErrorAction SilentlyContinue
+            return Get-ChildItem -Path $glob -File -Force -ErrorAction SilentlyContinue
           }
           $prefix = $normalized.Substring(0, $normalized.IndexOf('**')).TrimEnd('/')
           if (-not $prefix) { $prefix = '.' }
@@ -60,7 +60,10 @@ runs:
           $regex = $regex -replace [regex]::Escape($globstarToken), '.*'
           $regex = '^' + $regex + '$'
           $cwd = (Get-Location).Path.Replace('\', '/').TrimEnd('/')
-          return Get-ChildItem -LiteralPath $prefix -File -Recurse -ErrorAction SilentlyContinue |
+          # -Force is required: `.sdkwork/evidence/*.json` is a dot-path, and
+          # PowerShell marks dot entries Hidden, so a plain recursion silently
+          # drops the artifact evidence documents from the release.
+          return Get-ChildItem -LiteralPath $prefix -File -Recurse -Force -ErrorAction SilentlyContinue |
             ForEach-Object {
               $full = $_.FullName.Replace('\', '/')
               $relative = if ($full.StartsWith($cwd + '/')) { $full.Substring($cwd.Length + 1) } else { $full }
