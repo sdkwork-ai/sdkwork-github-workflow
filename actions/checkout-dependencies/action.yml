@@ -24,6 +24,14 @@ runs:
         }
         $basic = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("x-access-token:$env:SDKWORK_RELEASE_CHECKOUT_TOKEN"))
         $authHeader = "AUTHORIZATION: basic $basic"
+        # A failed native command must fail the step. The default pwsh behaviour
+        # only records $LASTEXITCODE, so a partially checked out dependency tree
+        # would silently feed a truncated source tree into the build.
+        function Assert-GitSuccess([string]$operation) {
+          if ($LASTEXITCODE -ne 0) {
+            throw "[sdkwork-release-checkout] $operation failed with exit code $LASTEXITCODE"
+          }
+        }
         foreach ($dependency in $plan.include) {
           $path = [string]$dependency.path
           $repo = [string]$dependency.repository
@@ -40,12 +48,22 @@ runs:
             continue
           }
           Write-Host "[sdkwork-release-checkout] checkout $dependencyType dependency $repo -> $path"
-          git -c "http.https://github.com/.extraheader=$authHeader" clone --no-tags --depth 1 "https://github.com/$repo.git" $path
+          # Windows runners do not enable long paths by default. Generated SDK
+          # trees exceed MAX_PATH, and a checkout that cannot create those files
+          # must not be treated as a successful dependency checkout.
+          git -c "http.https://github.com/.extraheader=$authHeader" clone --no-tags --depth 1 -c core.longpaths=true "https://github.com/$repo.git" $path
+          Assert-GitSuccess "clone $repo"
+          git -C $path config core.longpaths true
+          Assert-GitSuccess "configure core.longpaths for $repo"
           git -c "http.https://github.com/.extraheader=$authHeader" -C $path fetch --depth 1 origin $ref
+          Assert-GitSuccess "fetch $ref for $repo"
           git -C $path checkout FETCH_HEAD
+          Assert-GitSuccess "checkout $ref for $repo"
           if ([string]$dependency.submodules -eq "recursive") {
-            git -C $path submodule update --init --recursive
+            git -c core.longpaths=true -C $path submodule update --init --recursive
+            Assert-GitSuccess "submodule update for $repo"
           } elseif ([string]$dependency.submodules -eq "true") {
-            git -C $path submodule update --init
+            git -c core.longpaths=true -C $path submodule update --init
+            Assert-GitSuccess "submodule update for $repo"
           }
         }

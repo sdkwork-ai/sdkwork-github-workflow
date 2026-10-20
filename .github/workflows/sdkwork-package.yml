@@ -262,7 +262,12 @@ jobs:
     needs: plan
     if: needs.plan.outputs.target_count != '0'
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 120
+    # A Rust application that links a large sibling-repository foundation suite
+    # compiles the whole graph once per target. A cold windows-2022 runner needs
+    # well over two hours for that graph, and the platform jobs run in parallel
+    # on independent runners, so the bound covers the slowest host rather than
+    # the sum of the hosts.
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.plan.outputs.matrix) }}

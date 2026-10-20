@@ -3264,7 +3264,7 @@ test('reusable workflow gates publication policies and passes deployment context
   assert.match(workflow, /runtime-target: \$\{\{ matrix\.runtimeTarget \}\}/u);
   assert.match(workflow, /SDKWORK_PACKAGE_VARIANT: \$\{\{ matrix\.variant \}\}/u);
   assert.match(workflow, /name: Require package artifacts for deployment/u);
-  assert.match(workflow, /inputs\.deploy && \(!inputs\.upload_artifact \|\| !fromJson\(steps\.matrix\.outputs\.summary_json\)\.publish\.workflowArtifact\)/u);
+  assert.match(workflow, /inputs\.deploy && \(!inputs\.upload_artifact \|\| !fromJson\(steps\.plan\.outputs\.summary_json\)\.publish\.workflowArtifact\)/u);
   assert.match(workflow, /name: Require a selected deployment/u);
   assert.match(workflow, /inputs\.deploy && steps\.deployments\.outputs\.deployment_count == '0'/u);
 });
