@@ -30,7 +30,7 @@ const REQUIRED_FILES = Object.freeze([
   'schemas/sdkwork-workflow.schema.json',
   'scripts/sdkwork-workflow.mjs',
   'templates/app-package.workflow.yml',
-  'sdkwork.app.config.json',
+  'agent.app.config.json',
   'examples/sdkwork-cloudrouter/sdkwork.workflow.json',
   'examples/mobile-flutter/sdkwork.workflow.json',
   'examples/tablet-cross-platform/sdkwork.workflow.json',
@@ -118,7 +118,7 @@ function validateYamlText(filePath, issues) {
   }
 }
 
-function validateAppManifestStandard(manifest, issues, filePath = 'sdkwork.app.config.json') {
+function validateAppManifestStandard(manifest, issues, filePath = 'agent.app.config.json') {
   if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
     issues.push(`${filePath} must be a JSON object`);
     return;
@@ -244,7 +244,7 @@ function validateAppManifestStandard(manifest, issues, filePath = 'sdkwork.app.c
 }
 
 function validateRootAppManifest(issues) {
-  const manifestPath = 'sdkwork.app.config.json';
+  const manifestPath = 'agent.app.config.json';
   if (!existsSync(path.resolve(manifestPath))) {
     return;
   }

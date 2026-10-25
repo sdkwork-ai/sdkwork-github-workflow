@@ -2119,7 +2119,7 @@ async function createReleaseNotes(config, {
   if (configuredSource === 'app-manifest') {
     const manifestNotes = await renderAppManifestReleaseNotes(config, context, { root });
     if (!manifestNotes) {
-      throw new Error(`No matching release.notes entry found in ${config.app.configPath ?? 'sdkwork.app.config.json'} for ${resolvedVersion || releaseLabel}`);
+      throw new Error(`No matching release.notes entry found in ${config.app.configPath ?? 'agent.app.config.json'} for ${resolvedVersion || releaseLabel}`);
     }
     return manifestNotes;
   }
@@ -2223,8 +2223,8 @@ function renderGenericReleaseNotes(context, { source, includeCommits, commits })
 async function resolveExistingAppManifestPath(config, root) {
   const candidates = [
     config.app.configPath,
-    path.join(config.app.sourcePath ?? '.', 'sdkwork.app.config.json'),
-    'sdkwork.app.config.json',
+    path.join(config.app.sourcePath ?? '.', 'agent.app.config.json'),
+    'agent.app.config.json',
   ].filter(Boolean);
   for (const candidate of unique(candidates.map((value) => String(value).replaceAll('\\', '/')))) {
     if (!isSafeRelativePath(candidate, { allowDot: false })) {

@@ -231,7 +231,7 @@ Every GitHub Release published by the reusable workflow renders a Release notes 
 
 `source: "auto"` resolves notes in this order:
 
-1. `sdkwork.app.config.json` `release.notes[]`, matching `package_version`, release tag, or the current note.
+1. `agent.app.config.json` `release.notes[]`, matching `package_version`, release tag, or the current note.
 2. `CHANGELOG.md` at the repository root.
 3. Recent git commit subjects.
 
@@ -240,7 +240,7 @@ Applications can choose an explicit source:
 | Source | Behavior |
 | --- | --- |
 | `auto` | Manifest notes, then `CHANGELOG.md`, then git commit subjects. |
-| `app-manifest` | Require a matching `release.notes[]` entry in `app.configPath` or `sdkwork.app.config.json`. |
+| `app-manifest` | Require a matching `release.notes[]` entry in `app.configPath` or `agent.app.config.json`. |
 | `file` | Require a markdown file declared by `release.changelog.path`, for example `CHANGELOG.md`. |
 | `git` | Render recent git commit subjects. |
 | `none` | Render only the standard SDKWork release/package summary. |

@@ -1391,10 +1391,10 @@ test('renders release notes from sdkwork app manifest notes before git fallback'
   await rm(root, { recursive: true, force: true });
   await mkdir(root, { recursive: true });
   await writeFile(
-    path.join(root, 'sdkwork.app.config.json'),
+    path.join(root, 'agent.app.config.json'),
     JSON.stringify({
       schemaVersion: 3,
-      kind: 'sdkwork.app',
+      kind: 'agent.app',
       app: {
         key: 'demo-app',
         name: 'Demo App',
@@ -1420,7 +1420,7 @@ test('renders release notes from sdkwork app manifest notes before git fallback'
       name: 'Demo App',
       repository: 'Org/demo-app',
       sourcePath: '.',
-      configPath: 'sdkwork.app.config.json',
+      configPath: 'agent.app.config.json',
     },
     release: {
       artifactPrefix: 'demo-app',
@@ -1462,10 +1462,10 @@ test('does not use stale current app manifest notes for a different release vers
   await rm(root, { recursive: true, force: true });
   await mkdir(root, { recursive: true });
   await writeFile(
-    path.join(root, 'sdkwork.app.config.json'),
+    path.join(root, 'agent.app.config.json'),
     JSON.stringify({
       schemaVersion: 3,
-      kind: 'sdkwork.app',
+      kind: 'agent.app',
       app: {
         key: 'demo-app',
         name: 'Demo App',
@@ -1490,7 +1490,7 @@ test('does not use stale current app manifest notes for a different release vers
       name: 'Demo App',
       repository: 'Org/demo-app',
       sourcePath: '.',
-      configPath: 'sdkwork.app.config.json',
+      configPath: 'agent.app.config.json',
     },
     release: {
       artifactPrefix: 'demo-app',
@@ -1548,10 +1548,10 @@ test('resolves package version from release tag before default version', async (
   await rm(root, { recursive: true, force: true });
   await mkdir(root, { recursive: true });
   await writeFile(
-    path.join(root, 'sdkwork.app.config.json'),
+    path.join(root, 'agent.app.config.json'),
     JSON.stringify({
       schemaVersion: 3,
-      kind: 'sdkwork.app',
+      kind: 'agent.app',
       app: {
         key: 'demo-app',
         name: 'Demo App',
@@ -1576,7 +1576,7 @@ test('resolves package version from release tag before default version', async (
       name: 'Demo App',
       repository: 'Org/demo-app',
       sourcePath: '.',
-      configPath: 'sdkwork.app.config.json',
+      configPath: 'agent.app.config.json',
     },
     release: {
       artifactPrefix: 'demo-app',

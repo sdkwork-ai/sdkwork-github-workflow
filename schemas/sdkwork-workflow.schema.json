@@ -77,7 +77,7 @@
             },
             "source": {
               "enum": ["auto", "app-manifest", "file", "git", "none"],
-              "description": "auto reads sdkwork.app.config.json release.notes, then CHANGELOG.md, then git commit subjects."
+              "description": "auto reads agent.app.config.json release.notes, then CHANGELOG.md, then git commit subjects."
             },
             "path": {
               "type": "string",
