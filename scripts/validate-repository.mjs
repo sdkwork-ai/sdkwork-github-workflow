@@ -11,7 +11,7 @@ import {
   SUPPORTED_DEPLOYMENT_PROFILES,
   SUPPORTED_RUNTIME_TARGETS,
   validateWorkflowConfig,
-} from './sdkwork-workflow.mjs';
+} from './agent-workflow.mjs';
 import { mkdir, rm } from 'node:fs/promises';
 
 const REQUIRED_FILES = Object.freeze([
@@ -27,13 +27,13 @@ const REQUIRED_FILES = Object.freeze([
   'actions/setup-toolchains/action.yml',
   'actions/run-lifecycle/action.yml',
   'actions/publish-release/action.yml',
-  'schemas/sdkwork-workflow.schema.json',
-  'scripts/sdkwork-workflow.mjs',
+  'schemas/agent-workflow.schema.json',
+  'scripts/agent-workflow.mjs',
   'templates/app-package.workflow.yml',
   'agent.app.config.json',
-  'examples/sdkwork-cloudrouter/sdkwork.workflow.json',
-  'examples/mobile-flutter/sdkwork.workflow.json',
-  'examples/tablet-cross-platform/sdkwork.workflow.json',
+  'examples/sdkwork-cloudrouter/agent.workflow.json',
+  'examples/mobile-flutter/agent.workflow.json',
+  'examples/tablet-cross-platform/agent.workflow.json',
   'README.md',
 ]);
 
@@ -254,9 +254,9 @@ function validateRootAppManifest(issues) {
 
 async function validateExamples(issues) {
   for (const configPath of [
-    'examples/sdkwork-cloudrouter/sdkwork.workflow.json',
-    'examples/mobile-flutter/sdkwork.workflow.json',
-    'examples/tablet-cross-platform/sdkwork.workflow.json',
+    'examples/sdkwork-cloudrouter/agent.workflow.json',
+    'examples/mobile-flutter/agent.workflow.json',
+    'examples/tablet-cross-platform/agent.workflow.json',
   ]) {
     const config = await loadWorkflowConfig(configPath);
     const configIssues = validateWorkflowConfig(config);
@@ -287,7 +287,7 @@ async function validateGenerator(issues) {
       repository: 'sdkwork-ai/repository-validate-app',
       profiles: ['server', 'tablet'],
     });
-    const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
+    const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
     const configIssues = validateWorkflowConfig(config);
     issues.push(...configIssues.map((issue) => `generated init-app config: ${issue}`));
   } finally {

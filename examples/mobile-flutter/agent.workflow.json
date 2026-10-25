@@ -1,6 +1,6 @@
 {
-  "$schema": "../../schemas/sdkwork-workflow.schema.json",
-  "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
+  "$schema": "../../schemas/agent-workflow.schema.json",
+  "schemaVersion": "2026-06-06.agent.workflow.v1",
   "app": {
     "id": "sdkwork-mobile-example",
     "name": "SDKWork Mobile Example",

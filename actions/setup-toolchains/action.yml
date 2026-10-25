@@ -1,9 +1,9 @@
 name: Set up SDKWork toolchains
-description: Set up language and packaging toolchains declared in sdkwork.workflow.json.
+description: Set up language and packaging toolchains declared in agent.workflow.json.
 inputs:
   config-path:
     required: true
-    description: Path to sdkwork.workflow.json.
+    description: Path to agent.workflow.json.
 runs:
   using: composite
   steps:
@@ -13,7 +13,7 @@ runs:
         SDKWORK_CONFIG_PATH: ${{ inputs.config-path }}
       run: |
         set -euo pipefail
-        node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs toolchains \
+        node .sdkwork/github-workflow/scripts/agent-workflow.mjs toolchains \
           --config "${SDKWORK_CONFIG_PATH}" \
           --github-output
 

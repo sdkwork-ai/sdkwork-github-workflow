@@ -1,8 +1,8 @@
 name: Validate SDKWork workflow config
-description: Validate sdkwork.workflow.json with the SDKWork workflow planner.
+description: Validate agent.workflow.json with the SDKWork workflow planner.
 inputs:
   config-path:
-    description: Path to sdkwork.workflow.json.
+    description: Path to agent.workflow.json.
     required: true
 outputs:
   ok:
@@ -20,6 +20,6 @@ runs:
         SDKWORK_CONFIG_PATH: ${{ inputs.config-path }}
       run: |
         set -euo pipefail
-        node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs validate \
+        node .sdkwork/github-workflow/scripts/agent-workflow.mjs validate \
           --config "${SDKWORK_CONFIG_PATH}" \
           --github-output

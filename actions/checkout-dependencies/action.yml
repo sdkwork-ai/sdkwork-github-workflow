@@ -1,9 +1,9 @@
 name: Checkout SDKWork dependencies
-description: Checkout repositories declared by sdkwork.workflow.json dependency plan.
+description: Checkout repositories declared by agent.workflow.json dependency plan.
 inputs:
   dependencies-json:
     required: true
-    description: Dependency plan JSON from scripts/sdkwork-workflow.mjs dependencies.
+    description: Dependency plan JSON from scripts/agent-workflow.mjs dependencies.
   token:
     required: false
     description: GitHub token for private dependency repositories.

@@ -19,9 +19,9 @@ import {
   validateWorkflowConfig,
   validateArtifactEvidenceDocument,
   verifyArtifactEvidence,
-} from '../scripts/sdkwork-workflow.mjs';
+} from '../scripts/agent-workflow.mjs';
 
-const tempRoot = path.resolve('tmp/tests/sdkwork-workflow');
+const tempRoot = path.resolve('tmp/tests/agent-workflow');
 
 function escapeRegExp(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
@@ -33,7 +33,7 @@ test.after(async () => {
 
 test('validates the minimal cross-platform workflow config', async () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: {
       id: 'demo-router',
       name: 'Demo Router',
@@ -107,7 +107,7 @@ test('validates the minimal cross-platform workflow config', async () => {
 
 test('rejects unsupported platforms, empty target formats, and unsafe output globs', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-app', repository: 'Org/bad-app' },
     release: { artifactPrefix: 'bad-app' },
     targets: [
@@ -133,7 +133,7 @@ test('rejects unsupported platforms, empty target formats, and unsafe output glo
 
 test('rejects dynamic uses steps in lifecycle config', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-uses', repository: 'Org/bad-uses' },
     release: { artifactPrefix: 'bad-uses' },
     lifecycle: {
@@ -160,7 +160,7 @@ test('rejects dynamic uses steps in lifecycle config', () => {
 
 test('enforces required signing and SBOM security lifecycle policies', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'secure-app', repository: 'Org/secure-app' },
     release: { artifactPrefix: 'secure-app' },
     lifecycle: {
@@ -205,7 +205,7 @@ test('enforces required signing and SBOM security lifecycle policies', () => {
 
 test('rejects logging-only signing and SBOM placeholders when evidence is required', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'placeholder-security', repository: 'Org/placeholder-security' },
     release: { artifactPrefix: 'placeholder-security' },
     lifecycle: {
@@ -236,7 +236,7 @@ test('rejects logging-only signing and SBOM placeholders when evidence is requir
 
 test('projects explicit client platform and architecture axes into lifecycle plans', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'client-axes', repository: 'Org/client-axes' },
     release: { artifactPrefix: 'client-axes' },
     lifecycle: { package: [{ run: 'pnpm package' }] },
@@ -271,7 +271,7 @@ test('projects explicit client platform and architecture axes into lifecycle pla
 
 test('rejects inconsistent or incomplete client axes', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-client-axes', repository: 'Org/bad-client-axes' },
     release: { artifactPrefix: 'bad-client-axes' },
     targets: [
@@ -298,7 +298,7 @@ test('rejects inconsistent or incomplete client axes', () => {
 
 test('rejects unknown workflow config properties so schema and planner stay aligned', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     unexpected: true,
     app: { id: 'bad-schema', repository: 'Org/bad-schema', unexpected: true },
     release: { artifactPrefix: 'bad-schema', unexpected: true },
@@ -350,7 +350,7 @@ test('rejects unknown workflow config properties so schema and planner stay alig
 
 test('rejects schema-declared type and cardinality violations in planner validation', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-types', name: 42, repository: 'Org/bad-types' },
     release: { artifactPrefix: 'bad-types' },
     toolchains: {
@@ -380,7 +380,7 @@ test('rejects schema-declared type and cardinality violations in planner validat
 
 test('rejects duplicate target formats before matrix planning', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'duplicate-format', repository: 'Org/duplicate-format' },
     release: { artifactPrefix: 'duplicate-format' },
     targets: [
@@ -404,7 +404,7 @@ test('rejects duplicate target formats before matrix planning', () => {
 
 test('uses deployment profile and runtime target in canonical package ids and lifecycle environment', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'runtime-demo', repository: 'Org/runtime-demo' },
     release: { artifactPrefix: 'runtime-demo' },
     lifecycle: {
@@ -474,7 +474,7 @@ test('uses deployment profile and runtime target in canonical package ids and li
 
   assert.equal(plan.steps[0].env.SDKWORK_DEPLOYMENT_PROFILE, 'standalone');
   assert.equal(plan.steps[0].env.SDKWORK_RUNTIME_TARGET, 'server');
-  assert.equal(plan.steps[0].env.SDKWORK_WORKFLOW_CLI.replaceAll('\\', '/').endsWith('scripts/sdkwork-workflow.mjs'), true);
+  assert.equal(plan.steps[0].env.SDKWORK_WORKFLOW_CLI.replaceAll('\\', '/').endsWith('scripts/agent-workflow.mjs'), true);
   assert.equal(
     plan.steps[0].env.SDKWORK_ARTIFACT_EVIDENCE_PATHS,
     '.sdkwork/evidence/linux-debian-x64-standalone-server-deb.json',
@@ -483,7 +483,7 @@ test('uses deployment profile and runtime target in canonical package ids and li
 
 test('requires a profile binding or compatibility deploymentProfile and a runtimeTarget', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'missing-runtime-fields', repository: 'Org/missing-runtime-fields' },
     release: { artifactPrefix: 'missing-runtime-fields' },
     targets: [
@@ -507,7 +507,7 @@ test('requires a profile binding or compatibility deploymentProfile and a runtim
 
 test('plans runtime-configurable client artifacts once with a dual package id and selected active profile', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'dual-client', repository: 'Org/dual-client' },
     release: { artifactPrefix: 'dual-client' },
     lifecycle: {
@@ -614,8 +614,8 @@ test('validates immutable artifact evidence against fixed and runtime-configurab
 });
 
 test('creates evidence from artifact bytes and rejects stale version, commit, or digest bindings', async () => {
-  const artifactPath = 'tmp/tests/sdkwork-workflow/evidence/demo.tar.gz';
-  const evidencePath = 'tmp/tests/sdkwork-workflow/evidence/demo.json';
+  const artifactPath = 'tmp/tests/agent-workflow/evidence/demo.tar.gz';
+  const evidencePath = 'tmp/tests/agent-workflow/evidence/demo.json';
   const matrixItem = {
     id: 'linux-x64-standalone-server-tar-gz',
     packageId: 'linux-x64-standalone-server-tar-gz',
@@ -664,7 +664,7 @@ test('creates evidence from artifact bytes and rejects stale version, commit, or
 });
 
 test('OCI evidence binds the remote repository digest instead of image manifest bytes', async () => {
-  const root = 'tmp/tests/sdkwork-workflow/oci-evidence';
+  const root = 'tmp/tests/agent-workflow/oci-evidence';
   const artifactPath = `${root}/container-image.json`;
   const evidencePath = `${root}/container-evidence.json`;
   const repoDigest = `registry.sdkwork.com/demo@sha256:${'a'.repeat(64)}`;
@@ -705,15 +705,15 @@ test('OCI evidence binds the remote repository digest instead of image manifest 
 });
 
 test('evidence:create CLI writes evidence that the verify CLI accepts', async () => {
-  const root = 'tmp/tests/sdkwork-workflow/evidence-cli';
-  const configPath = `${root}/sdkwork.workflow.json`;
+  const root = 'tmp/tests/agent-workflow/evidence-cli';
+  const configPath = `${root}/agent.workflow.json`;
   const artifactPath = `${root}/demo.tar.gz`;
   const evidencePath = `${root}/demo.json`;
   const sourceCommit = 'abcdef0123456789abcdef0123456789abcdef01';
   await mkdir(root, { recursive: true });
   await writeFile(artifactPath, 'cli-package-bytes', 'utf8');
   await writeFile(configPath, JSON.stringify({
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'evidence-cli', repository: 'Org/evidence-cli' },
     release: { artifactPrefix: 'evidence-cli', defaultVersion: '2.0.0' },
     targets: [{
@@ -767,7 +767,7 @@ test('evidence:create CLI writes evidence that the verify CLI accepts', async ()
 
 test('keeps non-deployable test evidence out of deployment and profile publication selectors', () => {
   const baseConfig = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'test-evidence', repository: 'Org/test-evidence' },
     release: { artifactPrefix: 'test-evidence' },
     targets: [
@@ -807,7 +807,7 @@ test('keeps non-deployable test evidence out of deployment and profile publicati
 
 test('rejects invalid runtime-configurable and non-deployable target bindings', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-bindings', repository: 'Org/bad-bindings' },
     release: { artifactPrefix: 'bad-bindings' },
     targets: [
@@ -847,7 +847,7 @@ test('rejects invalid runtime-configurable and non-deployable target bindings', 
 
 test('rejects deployment, runtime target, and package profile axis mixups', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-target-taxonomy', repository: 'Org/bad-target-taxonomy' },
     release: { artifactPrefix: 'bad-target-taxonomy' },
     targets: [
@@ -896,7 +896,7 @@ test('rejects deployment, runtime target, and package profile axis mixups', () =
 
 test('rejects duplicate generated package ids after deployment profile normalization', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'duplicate-package-id', repository: 'Org/duplicate-package-id' },
     release: { artifactPrefix: 'duplicate-package-id' },
     targets: [
@@ -933,7 +933,7 @@ test('rejects duplicate generated package ids after deployment profile normaliza
 
 test('uses canonical package ids and artifact names for app profiles and platforms', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     targets: [
@@ -1026,7 +1026,7 @@ test('uses canonical package ids and artifact names for app profiles and platfor
 
 test('uses canonical variant package ids and lifecycle environment for deployment variants', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'variant-demo', repository: 'Org/variant-demo' },
     release: { artifactPrefix: 'variant-demo' },
     lifecycle: {
@@ -1083,7 +1083,7 @@ test('uses canonical variant package ids and lifecycle environment for deploymen
 
 test('rejects non-canonical variant target ids and package ids', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-variant', repository: 'Org/bad-variant' },
     release: { artifactPrefix: 'bad-variant' },
     targets: [
@@ -1110,7 +1110,7 @@ test('rejects non-canonical variant target ids and package ids', () => {
 
 test('rejects non-canonical explicit target package ids', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-package-id', repository: 'Org/bad-package-id' },
     release: { artifactPrefix: 'bad-package-id' },
     targets: [
@@ -1136,7 +1136,7 @@ test('rejects non-canonical explicit target package ids', () => {
 
 test('rejects non-canonical target ids for single-format targets', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-target-id', repository: 'Org/bad-target-id' },
     release: { artifactPrefix: 'bad-target-id' },
     targets: [
@@ -1160,7 +1160,7 @@ test('rejects non-canonical target ids for single-format targets', () => {
 
 test('rejects format-suffixed target ids for multi-format targets', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-target-group-id', repository: 'Org/bad-target-group-id' },
     release: { artifactPrefix: 'bad-target-group-id' },
     targets: [
@@ -1186,7 +1186,7 @@ test('rejects format-suffixed target ids for multi-format targets', () => {
 
 test('rejects linux native package targets without distribution', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'missing-linux-distribution', repository: 'Org/missing-linux-distribution' },
     release: { artifactPrefix: 'missing-linux-distribution' },
     targets: [
@@ -1210,7 +1210,7 @@ test('rejects linux native package targets without distribution', () => {
 
 test('rejects linux distribution values that do not match the native package format', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-linux-distribution', repository: 'Org/bad-linux-distribution' },
     release: { artifactPrefix: 'bad-linux-distribution' },
     targets: [
@@ -1235,7 +1235,7 @@ test('rejects linux distribution values that do not match the native package for
 
 test('rejects linux distribution on generic archive package targets', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'generic-linux-archive', repository: 'Org/generic-linux-archive' },
     release: { artifactPrefix: 'generic-linux-archive' },
     targets: [
@@ -1260,7 +1260,7 @@ test('rejects linux distribution on generic archive package targets', () => {
 
 test('rejects linux native packages mixed with generic formats in one target', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'mixed-linux-native', repository: 'Org/mixed-linux-native' },
     release: { artifactPrefix: 'mixed-linux-native' },
     targets: [
@@ -1285,7 +1285,7 @@ test('rejects linux native packages mixed with generic formats in one target', (
 
 test('rejects artifact prefixes that cannot produce canonical artifact names', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-artifact-prefix', repository: 'Org/bad-artifact-prefix' },
     release: { artifactPrefix: 'bad_prefix' },
     targets: [
@@ -1308,13 +1308,13 @@ test('rejects artifact prefixes that cannot produce canonical artifact names', (
 });
 
 test('schema declares the instance schema metadata field used by examples', async () => {
-  const schema = JSON.parse(await readFile('schemas/sdkwork-workflow.schema.json', 'utf8'));
+  const schema = JSON.parse(await readFile('schemas/agent-workflow.schema.json', 'utf8'));
 
   assert.equal(schema.properties.$schema.type, 'string');
 });
 
 test('schema declares the canonical package id token pattern', async () => {
-  const schema = JSON.parse(await readFile('schemas/sdkwork-workflow.schema.json', 'utf8'));
+  const schema = JSON.parse(await readFile('schemas/agent-workflow.schema.json', 'utf8'));
 
   assert.equal(schema.properties.release.properties.artifactPrefix.pattern, '^[a-z0-9][a-z0-9-]*$');
   assert.equal(schema.properties.targets.items.properties.id.pattern, '^[a-z0-9][a-z0-9-]*$');
@@ -1327,7 +1327,7 @@ test('schema declares the canonical package id token pattern', async () => {
 
 test('validates release changelog configuration and schema fields', async () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'release-notes-demo', repository: 'Org/release-notes-demo' },
     release: {
       artifactPrefix: 'release-notes-demo',
@@ -1376,7 +1376,7 @@ test('validates release changelog configuration and schema fields', async () => 
   assert.ok(issues.some((issue) => issue.includes('release.changelog.maxCommitSubjects must be an integer from 1 to 200')));
   assert.ok(issues.some((issue) => issue.includes('release.changelog.unexpected is not supported')));
 
-  const schema = JSON.parse(await readFile('schemas/sdkwork-workflow.schema.json', 'utf8'));
+  const schema = JSON.parse(await readFile('schemas/agent-workflow.schema.json', 'utf8'));
   assert.deepEqual(schema.properties.release.properties.changelog.properties.source.enum, [
     'auto',
     'app-manifest',
@@ -1414,7 +1414,7 @@ test('renders release notes from sdkwork app manifest notes before git fallback'
   );
 
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: {
       id: 'demo-app',
       name: 'Demo App',
@@ -1484,7 +1484,7 @@ test('does not use stale current app manifest notes for a different release vers
   );
 
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: {
       id: 'demo-app',
       name: 'Demo App',
@@ -1570,7 +1570,7 @@ test('resolves package version from release tag before default version', async (
   );
 
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: {
       id: 'demo-app',
       name: 'Demo App',
@@ -1633,7 +1633,7 @@ test('renders release notes from configured changelog file', async () => {
   await writeFile(path.join(root, 'CHANGELOG.md'), '# Existing Changelog\n\n- Added packaged app standard.\n');
 
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'file-app', name: 'File App', repository: 'Org/file-app' },
     release: {
       artifactPrefix: 'file-app',
@@ -1668,7 +1668,7 @@ test('renders release notes from configured changelog file', async () => {
 
 test('rejects unsafe dependency refs and unsupported per-dependency token secret names', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-dependency', repository: 'Org/bad-dependency' },
     release: { artifactPrefix: 'bad-dependency' },
     dependencies: [
@@ -1702,7 +1702,7 @@ test('rejects unsafe dependency refs and unsupported per-dependency token secret
 
 test('rejects dependency checkout paths that collide with application or framework checkouts', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-dependency-paths', repository: 'Org/bad-dependency-paths', sourcePath: 'apps/app' },
     release: { artifactPrefix: 'bad-dependency-paths' },
     dependencies: [
@@ -1756,7 +1756,7 @@ test('rejects dependency checkout paths that collide with application or framewo
 
 test('rejects explicit dependency checkout path when it overlaps application source path', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'default-dependency-path', repository: 'Org/default-dependency-path', sourcePath: 'dependencies/sdkwork-core' },
     release: { artifactPrefix: 'default-dependency-path' },
     dependencies: [
@@ -1787,7 +1787,7 @@ test('rejects explicit dependency checkout path when it overlaps application sou
 
 test('plans default dependency checkout as a runner-local sibling repository', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'repo-root-app', repository: 'Org/repo-root-app', sourcePath: '.' },
     release: { artifactPrefix: 'repo-root-app' },
     dependencies: [
@@ -1820,7 +1820,7 @@ test('plans default dependency checkout as a runner-local sibling repository', (
 
 test('plans verification dependencies without treating them as runtime release dependencies', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'boundary-app', repository: 'Org/boundary-app' },
     release: { artifactPrefix: 'boundary-app' },
     dependencies: [
@@ -1883,7 +1883,7 @@ test('plans verification dependencies without treating them as runtime release d
 
 test('rejects unsafe lifecycle working directories and non-string step environment values', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-lifecycle', repository: 'Org/bad-lifecycle', sourcePath: '.' },
     release: { artifactPrefix: 'bad-lifecycle' },
     lifecycle: {
@@ -1920,7 +1920,7 @@ test('rejects unsafe lifecycle working directories and non-string step environme
 
 test('summarizes publication and supply chain policy for reusable workflow jobs', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'policy-demo', repository: 'Org/policy-demo' },
     release: { artifactPrefix: 'policy-demo' },
     targets: [
@@ -1972,7 +1972,7 @@ test('summarizes publication and supply chain policy for reusable workflow jobs'
 
 test('creates a GitHub Actions matrix filtered by platform, architecture, profile, and format', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     targets: [
@@ -2051,7 +2051,7 @@ test('creates a GitHub Actions matrix filtered by platform, architecture, profil
 
 test('uses package id and format for multi-format artifact names', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     targets: [
@@ -2076,7 +2076,7 @@ test('uses package id and format for multi-format artifact names', () => {
 
 test('supports tablet package targets as first-class profile and platforms', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'tablet-demo', repository: 'Org/tablet-demo' },
     release: { artifactPrefix: 'tablet-demo' },
     lifecycle: {
@@ -2137,10 +2137,10 @@ test('supports tablet package targets as first-class profile and platforms', () 
 test('loads JSON config with comments stripped and rejects invalid JSON', async () => {
   await rm(tempRoot, { recursive: true, force: true });
   await mkdir(tempRoot, { recursive: true });
-  const configPath = path.join(tempRoot, 'sdkwork.workflow.json');
+  const configPath = path.join(tempRoot, 'agent.workflow.json');
   await writeFile(configPath, `{
     // application identity
-    "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
+    "schemaVersion": "2026-06-06.agent.workflow.v1",
     "app": { "id": "commented", "repository": "Org/commented" },
     "release": { "artifactPrefix": "commented" },
     "targets": []
@@ -2157,7 +2157,7 @@ test('redacts token-like values before writing logs', () => {
 
 test('creates dependency plan from generic ref mapping', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     dependencies: [
@@ -2203,10 +2203,10 @@ test('creates dependency plan from generic ref mapping', () => {
 test('loads dependency refs from a JSON file in CLI mode', async () => {
   const root = path.join(tempRoot, 'dependency-refs-file');
   await mkdir(root, { recursive: true });
-  const configPath = path.join(root, 'sdkwork.workflow.json');
+  const configPath = path.join(root, 'agent.workflow.json');
   const refsPath = path.join(root, 'refs.json');
   await writeFile(configPath, JSON.stringify({
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     dependencies: [
@@ -2232,7 +2232,7 @@ test('loads dependency refs from a JSON file in CLI mode', async () => {
   }));
   await writeFile(refsPath, JSON.stringify({ SDKWORK_CORE_REF: 'file-ref' }));
 
-  const { main } = await import('../scripts/sdkwork-workflow.mjs');
+  const { main } = await import('../scripts/agent-workflow.mjs');
   const previousWrite = process.stdout.write;
   let output = '';
   process.stdout.write = (chunk) => {
@@ -2262,7 +2262,7 @@ test('loads dependency refs file with UTF-8 BOM', async () => {
   const refsPath = path.join(root, 'refs.json');
   await writeFile(refsPath, `\uFEFF${JSON.stringify({ SDKWORK_CORE_REF: 'bom-ref' })}`, 'utf8');
 
-  const { loadJsonObjectFile } = await import('../scripts/sdkwork-workflow.mjs');
+  const { loadJsonObjectFile } = await import('../scripts/agent-workflow.mjs');
   assert.deepEqual(await loadJsonObjectFile(refsPath, 'dependency refs file'), {
     SDKWORK_CORE_REF: 'bom-ref',
   });
@@ -2283,7 +2283,7 @@ test('initializes an application workflow without overwriting existing files', a
   });
 
   assert.equal(result.written.length, 2);
-  const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
+  const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
   assert.deepEqual(validateWorkflowConfig(config), []);
   assert.equal(config.app.id, 'demo-app');
   assert.ok(config.targets.some((target) => target.profile === 'tablet'));
@@ -2324,7 +2324,7 @@ test('init-app generates standard linux native and windows installer package tar
     frameworkRef: 'v1',
   });
 
-  const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
+  const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
   assert.deepEqual(validateWorkflowConfig(config), []);
   const matrix = createPackageMatrix(config, { platform: 'all', architecture: 'all', profile: 'all', format: 'all' });
   const packageIds = matrix.include.map((item) => item.packageId);
@@ -2351,7 +2351,7 @@ test('init-app generates shell-neutral lifecycle placeholders', async () => {
     frameworkRef: 'v1',
   });
 
-  const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
+  const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
   const steps = Object.values(config.lifecycle).flat();
 
   assert.ok(steps.length > 0);
@@ -2415,7 +2415,7 @@ test('CLI init-app does not require an existing workflow config', async () => {
 
   const result = JSON.parse(output);
   assert.equal(result.ok, true);
-  const config = await loadWorkflowConfig(path.join(root, 'sdkwork.workflow.json'));
+  const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
   assert.deepEqual(validateWorkflowConfig(config), []);
   assert.ok(config.targets.some((target) => target.profile === 'tablet'));
 });
@@ -2445,7 +2445,7 @@ test('init-app rejects invalid application identity before writing files', async
 
 test('creates normalized toolchain plan with empty defaults', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     toolchains: {
@@ -2533,7 +2533,7 @@ test('dependency checkout action does not expose legacy SDKWork dependency direc
 
 test('creates deployment matrix from declared environments and selected package targets', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo' },
     release: { artifactPrefix: 'demo' },
     lifecycle: {
@@ -2616,7 +2616,7 @@ test('creates deployment matrix from declared environments and selected package 
 
 test('validates deployment environment and lifecycle values', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-deploy', repository: 'Org/bad-deploy' },
     release: { artifactPrefix: 'bad-deploy' },
     targets: [
@@ -2650,7 +2650,7 @@ test('validates deployment environment and lifecycle values', () => {
 
 test('rejects deployments that cannot bind to any package target', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'bad-deploy-selector', repository: 'Org/bad-deploy-selector' },
     release: { artifactPrefix: 'bad-deploy-selector' },
     targets: [
@@ -2682,7 +2682,7 @@ test('rejects deployments that cannot bind to any package target', () => {
 
 test('rejects configured deployments without a deployment lifecycle implementation', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'missing-deploy-lifecycle', repository: 'Org/missing-deploy-lifecycle' },
     release: { artifactPrefix: 'missing-deploy-lifecycle' },
     targets: [
@@ -2715,7 +2715,7 @@ test('rejects configured deployments without a deployment lifecycle implementati
 
 test('creates lifecycle command plan with target environment', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo', sourcePath: 'apps/demo' },
     release: { artifactPrefix: 'demo', defaultVersion: '1.2.3' },
     lifecycle: {
@@ -2765,7 +2765,7 @@ test('creates lifecycle command plan with target environment', () => {
           SDKWORK_APP_ID: 'demo',
           SDKWORK_APP_REPOSITORY: 'Org/demo',
           SDKWORK_APP_SOURCE_PATH: 'apps/demo',
-          SDKWORK_WORKFLOW_CLI: path.resolve('scripts/sdkwork-workflow.mjs'),
+          SDKWORK_WORKFLOW_CLI: path.resolve('scripts/agent-workflow.mjs'),
           SDKWORK_DEPLOYMENT_PROFILE: 'standalone',
           SDKWORK_RUNTIME_TARGET: 'server',
           SDKWORK_PACKAGE_ARCHITECTURE: 'x64',
@@ -2786,7 +2786,7 @@ test('creates lifecycle command plan with target environment', () => {
 
 test('creates lifecycle command plan with linux distribution environment', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'linux-native-demo', repository: 'Org/linux-native-demo' },
     release: { artifactPrefix: 'linux-native-demo', defaultVersion: '1.2.3' },
     lifecycle: {
@@ -2821,7 +2821,7 @@ test('creates lifecycle command plan with linux distribution environment', () =>
 
 test('creates lifecycle command plan with deployment environment values', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo', sourcePath: 'apps/demo' },
     release: { artifactPrefix: 'demo', defaultVersion: '1.2.3' },
     lifecycle: {
@@ -2866,7 +2866,7 @@ test('creates lifecycle command plan with deployment environment values', () => 
 
 test('creates aggregate publish lifecycle plan with aggregate release context', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'aggregate-demo', repository: 'Org/aggregate-demo', sourcePath: 'apps/demo' },
     release: { artifactPrefix: 'aggregate-demo', defaultVersion: '1.2.3' },
     lifecycle: {
@@ -2916,7 +2916,7 @@ test('creates aggregate publish lifecycle plan with aggregate release context', 
 
 test('passes linux distribution through deployment lifecycle matrix items', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'linux-native-deploy', repository: 'Org/linux-native-deploy' },
     release: { artifactPrefix: 'linux-native-deploy', defaultVersion: '1.2.3' },
     lifecycle: {
@@ -2959,7 +2959,7 @@ test('passes linux distribution through deployment lifecycle matrix items', () =
 
 test('uses PowerShell by default for Windows tablet lifecycle targets', () => {
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'tablet-demo', repository: 'Org/tablet-demo' },
     release: { artifactPrefix: 'tablet-demo' },
     lifecycle: {
@@ -2987,9 +2987,9 @@ test('uses PowerShell by default for Windows tablet lifecycle targets', () => {
 });
 
 test('validates checked-in example configurations', async () => {
-  const cloudRouter = await loadWorkflowConfig('examples/sdkwork-cloudrouter/sdkwork.workflow.json');
-  const mobile = await loadWorkflowConfig('examples/mobile-flutter/sdkwork.workflow.json');
-  const tablet = await loadWorkflowConfig('examples/tablet-cross-platform/sdkwork.workflow.json');
+  const cloudRouter = await loadWorkflowConfig('examples/sdkwork-cloudrouter/agent.workflow.json');
+  const mobile = await loadWorkflowConfig('examples/mobile-flutter/agent.workflow.json');
+  const tablet = await loadWorkflowConfig('examples/tablet-cross-platform/agent.workflow.json');
 
   assert.deepEqual(validateWorkflowConfig(cloudRouter), []);
   assert.deepEqual(validateWorkflowConfig(mobile), []);
@@ -3002,7 +3002,7 @@ test('executes lifecycle plan steps with injected package environment', async ()
   await mkdir(path.join(root, 'apps/demo'), { recursive: true });
   const outputPath = path.join(root, 'apps/demo/out.txt');
   const config = {
-    schemaVersion: '2026-06-06.sdkwork.workflow.v1',
+    schemaVersion: '2026-06-06.agent.workflow.v1',
     app: { id: 'demo', repository: 'Org/demo', sourcePath: 'apps/demo' },
     release: { artifactPrefix: 'demo', defaultVersion: '1.0.0' },
     lifecycle: {
@@ -3125,7 +3125,7 @@ jobs:
     steps:
       - shell: bash
         run: |
-          node scripts/sdkwork-workflow.mjs dependencies \\
+          node scripts/agent-workflow.mjs dependencies \\
             --dependency-refs-json '\${{ inputs.dependency_refs_json }}'
 `);
 
@@ -3200,7 +3200,7 @@ jobs:
         env:
           SDKWORK_CONFIG_PATH: \${{ inputs.config_path }}
         run: |
-          node scripts/sdkwork-workflow.mjs matrix --config "$SDKWORK_CONFIG_PATH"
+          node scripts/agent-workflow.mjs matrix --config "$SDKWORK_CONFIG_PATH"
 
       - uses: ./actions/validate-config
         with:
@@ -3257,7 +3257,7 @@ test('reusable workflow gates publication policies and passes deployment context
   assert.match(workflow, /name: Verify artifact evidence/u);
   assert.match(workflow, /name: Verify package artifact evidence/u);
   assert.match(workflow, /SDKWORK_ARTIFACT_EVIDENCE_PATHS: \$\{\{ matrix\.artifactEvidencePathsText \}\}/u);
-  assert.match(workflow, /sdkwork-workflow\.mjs evidence/u);
+  assert.match(workflow, /agent-workflow\.mjs evidence/u);
   assert.match(workflow, /--artifact-evidence "\$\{SDKWORK_ARTIFACT_EVIDENCE_INPUT\}"/u);
   assert.match(workflow, /SDKWORK_RUNTIME_TARGET: \$\{\{ matrix\.runtimeTarget \}\}/u);
   assert.match(workflow, /deployment-profile: \$\{\{ matrix\.deploymentProfile \}\}/u);

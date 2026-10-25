@@ -8,7 +8,7 @@ import process from 'node:process';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const SCHEMA_VERSION = '2026-06-06.sdkwork.workflow.v1';
+const SCHEMA_VERSION = '2026-06-06.agent.workflow.v1';
 const SUPPORTED_DEPLOYMENT_PROFILES = Object.freeze(['standalone', 'cloud']);
 const SUPPORTED_PROFILE_BINDINGS = Object.freeze(['fixed', 'runtime-configurable', 'non-deployable']);
 const SUPPORTED_RUNTIME_TARGETS = Object.freeze([
@@ -252,10 +252,10 @@ const WORKFLOW_ARTIFACT_PREFIX = 'sdkwork';
 const WORKFLOW_CLI_PATH = fileURLToPath(import.meta.url);
 
 function printHelp() {
-  console.log(`Usage: node scripts/sdkwork-workflow.mjs <command> [options]
+  console.log(`Usage: node scripts/agent-workflow.mjs <command> [options]
 
 Commands:
-  validate       Validate an sdkwork.workflow.json file.
+  validate       Validate an agent.workflow.json file.
   matrix         Render the selected GitHub Actions package matrix.
   deployments    Render deployment matrix from selected package targets.
   dependencies   Render dependency checkout metadata.
@@ -264,10 +264,10 @@ Commands:
   lifecycle      Render one lifecycle phase execution plan.
   evidence       Verify artifact evidence against one selected package target.
   evidence:create Create artifact evidence from a packaged file or OCI image manifest and references.
-  init-app       Generate sdkwork.workflow.json and package workflow for an app.
+  init-app       Generate agent.workflow.json and package workflow for an app.
 
 Options:
-  --config <path>        Config path (default sdkwork.workflow.json).
+  --config <path>        Config path (default agent.workflow.json).
   --deployment-profile <value>
                          Deployment profile filter, or all.
   --runtime-target <value>
@@ -323,7 +323,7 @@ function parseArgs(argv = process.argv.slice(2)) {
   const command = argv[0] && !argv[0].startsWith('-') ? argv[0] : 'help';
   const settings = {
     command,
-    configPath: 'sdkwork.workflow.json',
+    configPath: 'agent.workflow.json',
     deploymentProfile: 'all',
     runtimeTarget: 'all',
     platform: 'all',
@@ -551,7 +551,7 @@ function parseBooleanOption(value, flag) {
   throw new Error(`${flag} must be true or false`);
 }
 
-async function loadWorkflowConfig(configPath = 'sdkwork.workflow.json') {
+async function loadWorkflowConfig(configPath = 'agent.workflow.json') {
   const absolutePath = path.resolve(configPath);
   const raw = await readFile(absolutePath, 'utf8');
   try {
@@ -2539,7 +2539,7 @@ async function initApplicationWorkflow({
   const workflowContent = await createApplicationPackageWorkflow({ frameworkRef });
 
   const absoluteRoot = path.resolve(root);
-  const configPath = path.join(absoluteRoot, 'sdkwork.workflow.json');
+  const configPath = path.join(absoluteRoot, 'agent.workflow.json');
   const workflowPath = path.join(absoluteRoot, '.github', 'workflows', 'package.yml');
   const files = [
     {
@@ -2587,7 +2587,7 @@ function normalizeProfiles(profiles) {
 
 function createInitialWorkflowConfig({ appId, appName, repository, profiles }) {
   return {
-    $schema: 'https://sdkwork.com/schemas/sdkwork-workflow.schema.json',
+    $schema: 'https://sdkwork.com/schemas/agent-workflow.schema.json',
     schemaVersion: SCHEMA_VERSION,
     app: {
       id: appId,
@@ -3044,8 +3044,8 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, ...result }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] initialized ${result.root}`);
-      result.written.forEach((filePath) => console.log(`[sdkwork-workflow]   ${filePath}`));
+      console.log(`[agent-workflow] initialized ${result.root}`);
+      result.written.forEach((filePath) => console.log(`[agent-workflow]   ${filePath}`));
     }
     return 0;
   }
@@ -3068,10 +3068,10 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify(result, null, 2));
     } else if (result.ok) {
-      console.log(`[sdkwork-workflow] valid: ${result.configPath}`);
+      console.log(`[agent-workflow] valid: ${result.configPath}`);
     } else {
-      console.error('[sdkwork-workflow] validation failed:');
-      result.issues.forEach((issue) => console.error(`[sdkwork-workflow]   ${issue}`));
+      console.error('[agent-workflow] validation failed:');
+      result.issues.forEach((issue) => console.error(`[agent-workflow]   ${issue}`));
     }
     return result.ok ? 0 : 1;
   }
@@ -3093,9 +3093,9 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, matrix, summary }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] selected targets: ${matrix.include.length}`);
+      console.log(`[agent-workflow] selected targets: ${matrix.include.length}`);
       matrix.include.forEach((item) =>
-        console.log(`[sdkwork-workflow]   ${item.packageId} runner=${item.runner} format=${item.format}`)
+        console.log(`[agent-workflow]   ${item.packageId} runner=${item.runner} format=${item.format}`)
       );
     }
     return 0;
@@ -3123,7 +3123,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, path: settings.outputPath, source: notes.source }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] changelog: ${settings.outputPath} (${notes.source})`);
+      console.log(`[agent-workflow] changelog: ${settings.outputPath} (${notes.source})`);
     }
     return 0;
   }
@@ -3171,7 +3171,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, path: result.path, evidence: result.evidence }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] artifact evidence ${settings.command === 'evidence:create' ? 'created' : 'valid'}: ${result.path}`);
+      console.log(`[agent-workflow] artifact evidence ${settings.command === 'evidence:create' ? 'created' : 'valid'}: ${result.path}`);
     }
     return 0;
   }
@@ -3188,9 +3188,9 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, deployments: deploymentMatrix }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] deployments: ${deploymentMatrix.include.length}`);
+      console.log(`[agent-workflow] deployments: ${deploymentMatrix.include.length}`);
       deploymentMatrix.include.forEach((item) =>
-        console.log(`[sdkwork-workflow]   ${item.id} env=${item.environment} package=${item.packageId}`)
+        console.log(`[agent-workflow]   ${item.id} env=${item.environment} package=${item.packageId}`)
       );
     }
     return 0;
@@ -3211,9 +3211,9 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, dependencies: dependencyPlan }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] dependencies: ${dependencyPlan.include.length}`);
+      console.log(`[agent-workflow] dependencies: ${dependencyPlan.include.length}`);
       dependencyPlan.include.forEach((dependency) =>
-        console.log(`[sdkwork-workflow]   ${dependency.id} ${dependency.repository}@${redactSecretLikeValue(dependency.ref)}`)
+        console.log(`[agent-workflow]   ${dependency.id} ${dependency.repository}@${redactSecretLikeValue(dependency.ref)}`)
       );
     }
     return 0;
@@ -3227,10 +3227,10 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     if (settings.json) {
       console.log(JSON.stringify({ ok: true, toolchains: toolchainPlan }, null, 2));
     } else {
-      console.log('[sdkwork-workflow] toolchains:');
+      console.log('[agent-workflow] toolchains:');
       Object.entries(toolchainPlan)
         .filter(([, value]) => value !== '' && value !== 'false')
-        .forEach(([key, value]) => console.log(`[sdkwork-workflow]   ${key}=${value}`));
+        .forEach(([key, value]) => console.log(`[agent-workflow]   ${key}=${value}`));
     }
     return 0;
   }
@@ -3272,8 +3272,8 @@ async function main(argv = process.argv.slice(2), env = process.env) {
       }
       console.log(JSON.stringify({ ok: true, lifecycle: plan }, null, 2));
     } else {
-      console.log(`[sdkwork-workflow] lifecycle ${plan.phase}: ${plan.steps.length} step(s)`);
-      plan.steps.forEach((step) => console.log(`[sdkwork-workflow]   ${step.name}`));
+      console.log(`[agent-workflow] lifecycle ${plan.phase}: ${plan.steps.length} step(s)`);
+      plan.steps.forEach((step) => console.log(`[agent-workflow]   ${step.name}`));
       if (settings.run) {
         const result = await runLifecyclePlan(plan, { env });
         return result.ok ? 0 : 1;
@@ -3298,7 +3298,7 @@ if (invokedPath && sameModulePath(invokedPath, WORKFLOW_CLI_PATH)) {
   main().then((code) => {
     process.exitCode = code;
   }).catch((error) => {
-    console.error(`[sdkwork-workflow] ${error instanceof Error ? error.message : String(error)}`);
+    console.error(`[agent-workflow] ${error instanceof Error ? error.message : String(error)}`);
     process.exit(1);
   });
 }

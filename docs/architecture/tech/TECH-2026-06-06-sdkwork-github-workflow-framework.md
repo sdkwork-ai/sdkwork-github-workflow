@@ -5,7 +5,7 @@
 
 **Goal:** Build a reusable GitHub Actions workflow framework that standardizes SDKWork application packaging across server, desktop, mobile, web, and container targets.
 
-**Architecture:** Applications declare `sdkwork.workflow.json`; this framework validates the config, resolves matrices, checks out dependencies, sets up toolchains, runs lifecycle commands, and publishes artifacts through a reusable workflow. The core logic lives in a tested zero-dependency Node planner rather than copied YAML.
+**Architecture:** Applications declare `agent.workflow.json`; this framework validates the config, resolves matrices, checks out dependencies, sets up toolchains, runs lifecycle commands, and publishes artifacts through a reusable workflow. The core logic lives in a tested zero-dependency Node planner rather than copied YAML.
 
 **Tech Stack:** GitHub Actions reusable workflows, composite actions, Node ESM, JSON Schema, Node test runner.
 
@@ -14,8 +14,8 @@
 ### Task 1: Core Planner
 
 **Files:**
-- Create: `scripts/sdkwork-workflow.mjs`
-- Test: `tests/sdkwork-workflow.test.mjs`
+- Create: `scripts/agent-workflow.mjs`
+- Test: `tests/agent-workflow.test.mjs`
 
 - [x] Write failing tests for config validation.
 - [x] Write failing tests for matrix filtering.
@@ -28,8 +28,8 @@
 ### Task 2: Lifecycle Runner
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `scripts/agent-workflow.mjs`
+- Modify: `tests/agent-workflow.test.mjs`
 
 - [x] Write failing tests for lifecycle plan creation.
 - [x] Implement `createLifecyclePlan`.
@@ -40,9 +40,9 @@
 ### Task 3: Configuration Contract
 
 **Files:**
-- Create: `schemas/sdkwork-workflow.schema.json`
-- Create: `examples/sdkwork-cloudrouter/sdkwork.workflow.json`
-- Create: `examples/mobile-flutter/sdkwork.workflow.json`
+- Create: `schemas/agent-workflow.schema.json`
+- Create: `examples/sdkwork-cloudrouter/agent.workflow.json`
+- Create: `examples/mobile-flutter/agent.workflow.json`
 
 - [x] Create schema v1.
 - [x] Map `sdkwork-cloudrouter` workflow concepts into example config.
@@ -86,13 +86,13 @@
 ### Task 6: Deployment and Supply Chain Enhancements
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
-- Modify: `schemas/sdkwork-workflow.schema.json`
+- Modify: `scripts/agent-workflow.mjs`
+- Modify: `schemas/agent-workflow.schema.json`
 - Modify: `.github/workflows/sdkwork-package.yml`
 - Modify: `actions/run-lifecycle/action.yml`
-- Modify: `examples/sdkwork-cloudrouter/sdkwork.workflow.json`
-- Modify: `examples/mobile-flutter/sdkwork.workflow.json`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `examples/sdkwork-cloudrouter/agent.workflow.json`
+- Modify: `examples/mobile-flutter/agent.workflow.json`
+- Modify: `tests/agent-workflow.test.mjs`
 
 - [x] Write failing tests for deployment matrix planning.
 - [x] Implement deployment validation and matrix planning.
@@ -107,11 +107,11 @@
 ### Task 7: Tablet Packaging
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
-- Modify: `schemas/sdkwork-workflow.schema.json`
+- Modify: `scripts/agent-workflow.mjs`
+- Modify: `schemas/agent-workflow.schema.json`
 - Modify: `templates/app-package.workflow.yml`
-- Create: `examples/tablet-cross-platform/sdkwork.workflow.json`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Create: `examples/tablet-cross-platform/agent.workflow.json`
+- Modify: `tests/agent-workflow.test.mjs`
 
 - [x] Write failing tests for tablet profile and tablet platforms.
 - [x] Add `tablet` profile.
@@ -124,13 +124,13 @@
 ### Task 8: Application Bootstrap Generator
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
+- Modify: `scripts/agent-workflow.mjs`
 - Modify: `scripts/validate-repository.mjs`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `tests/agent-workflow.test.mjs`
 - Modify: `README.md`
 
 - [x] Write failing tests for `init-app` generation.
-- [x] Generate `sdkwork.workflow.json`.
+- [x] Generate `agent.workflow.json`.
 - [x] Generate `.github/workflows/package.yml`.
 - [x] Refuse to overwrite existing files unless forced.
 - [x] Validate generated config in repository validation.
@@ -140,8 +140,8 @@
 ### Task 9: Required Supply Chain Policy Validation
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `scripts/agent-workflow.mjs`
+- Modify: `tests/agent-workflow.test.mjs`
 - Modify: `README.md`
 - Modify: `docs/design/sdkwork-github-workflow-framework.md`
 
@@ -155,9 +155,9 @@
 ### Task 10: Application Git Trigger Standardization
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
+- Modify: `scripts/agent-workflow.mjs`
 - Modify: `templates/app-package.workflow.yml`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `tests/agent-workflow.test.mjs`
 - Modify: `README.md`
 - Modify: `docs/design/sdkwork-github-workflow-framework.md`
 
@@ -172,9 +172,9 @@
 ### Task 11: Multi-Event Application Input Compatibility
 
 **Files:**
-- Modify: `scripts/sdkwork-workflow.mjs`
+- Modify: `scripts/agent-workflow.mjs`
 - Modify: `templates/app-package.workflow.yml`
-- Modify: `tests/sdkwork-workflow.test.mjs`
+- Modify: `tests/agent-workflow.test.mjs`
 - Modify: `README.md`
 
 - [x] Write failing tests for event-safe generated workflow expressions.

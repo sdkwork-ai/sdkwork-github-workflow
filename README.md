@@ -5,7 +5,7 @@ Reusable GitHub Actions workflow framework for SDKWork application packaging, re
 
 The framework keeps application repositories thin:
 
-1. Each application commits `sdkwork.workflow.json`.
+1. Each application commits `agent.workflow.json`.
 2. Each application adds a small `.github/workflows/package.yml` that calls the framework reusable workflow.
 3. The framework owns matrix planning, dependency checkout, toolchain setup, lifecycle execution, artifact upload, release upload, and provenance attestation.
 
@@ -15,13 +15,13 @@ The framework also owns immutable artifact evidence plumbing. Deployable package
 targets must publish an evidence JSON document with `artifactPath`, the actual
 `sha256:` digest of that file, the selected SemVer/source commit, package/profile
 binding, and SBOM/provenance/signature references. Use
-`sdkwork-workflow evidence:create` from an application lifecycle hook to create
+`agent-workflow evidence:create` from an application lifecycle hook to create
 the document, then let the reusable workflow verify it before upload and again
 before deployment.
 
 ```bash
 node "$SDKWORK_WORKFLOW_CLI" evidence:create \
-  --config sdkwork.workflow.json \
+  --config agent.workflow.json \
   --target-id "$SDKWORK_PACKAGE_TARGET_ID" \
   --deployment-profile "$SDKWORK_DEPLOYMENT_PROFILE" \
   --version "$SDKWORK_PACKAGE_VERSION" \
@@ -60,8 +60,8 @@ protected-environment secrets and must never be placed in workflow config.
 - `actions/setup-toolchains` - composite action for declared language and packaging toolchains.
 - `actions/run-lifecycle` - composite action that executes application lifecycle phases.
 - `actions/publish-release` - composite action for GitHub Release asset publishing.
-- `scripts/sdkwork-workflow.mjs` - zero-dependency Node CLI and library for validation, matrix planning, dependency planning, changelog rendering, and lifecycle execution.
-- `schemas/sdkwork-workflow.schema.json` - JSON Schema for `sdkwork.workflow.json`.
+- `scripts/agent-workflow.mjs` - zero-dependency Node CLI and library for validation, matrix planning, dependency planning, changelog rendering, and lifecycle execution.
+- `schemas/agent-workflow.schema.json` - JSON Schema for `agent.workflow.json`.
 - `specs/component.spec.json` - machine-readable shared framework component contract.
 - `templates/app-package.workflow.yml` - minimal workflow entrypoint for application repositories.
 - `examples/sdkwork-cloudrouter` - migration example based on the original `sdkwork-cloudrouter` workflow.
@@ -73,7 +73,7 @@ protected-environment secrets and must never be placed in workflow config.
 Use the generator for a new application repository:
 
 ```bash
-node scripts/sdkwork-workflow.mjs init-app \
+node scripts/agent-workflow.mjs init-app \
   --root ../my-app \
   --app-id my-app \
   --app-name "My App" \
@@ -84,7 +84,7 @@ node scripts/sdkwork-workflow.mjs init-app \
 
 The generator writes:
 
-- `sdkwork.workflow.json`
+- `agent.workflow.json`
 - `.github/workflows/package.yml`
 
 It refuses to overwrite existing files unless `--force` is passed. Generated lifecycle placeholder steps use `shell: "node"` and read SDKWork values through `process.env` so the starter workflow behaves the same on Linux, Windows, and macOS runners.
@@ -96,12 +96,12 @@ For `--profiles server,desktop`, the starter config includes these package targe
 | server | `linux-debian-x64-standalone-server-deb`, `linux-rhel-x64-standalone-server-rpm`, `linux-x64-standalone-server-tar-gz` |
 | desktop | `windows-x64-standalone-desktop-msi`, `windows-x64-standalone-desktop-exe`, `macos-arm64-standalone-desktop-dmg` |
 
-Add `sdkwork.workflow.json` to the application repository:
+Add `agent.workflow.json` to the application repository:
 
 ```json
 {
-  "$schema": "https://sdkwork.com/schemas/sdkwork-workflow.schema.json",
-  "schemaVersion": "2026-06-06.sdkwork.workflow.v1",
+  "$schema": "https://sdkwork.com/schemas/agent-workflow.schema.json",
+  "schemaVersion": "2026-06-06.agent.workflow.v1",
   "app": {
     "id": "my-app",
     "repository": "sdkwork-ai/my-app",
@@ -255,8 +255,8 @@ Optional fields:
 Render notes locally:
 
 ```bash
-node scripts/sdkwork-workflow.mjs changelog \
-  --config sdkwork.workflow.json \
+node scripts/agent-workflow.mjs changelog \
+  --config agent.workflow.json \
   --version 1.2.0 \
   --release-tag v1.2.0 \
   --output .sdkwork/release/release-notes.md
@@ -306,7 +306,7 @@ jobs:
   package:
     uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1
     with:
-      config_path: sdkwork.workflow.json
+      config_path: agent.workflow.json
       tag: ${{ github.event.inputs.tag || github.event.release.tag_name || github.ref_name }}
       package_version: ${{ github.event.inputs.package_version || github.event.release.tag_name || github.ref_name }}
       deployment_profile: ${{ github.event.inputs.deployment_profile || 'all' }}
@@ -368,7 +368,7 @@ Lifecycle steps support `bash`, `sh`, `pwsh`, `powershell`, `cmd`, and `node` sh
 
 ## Deployment Contract
 
-Deployment targets are declared in `sdkwork.workflow.json`:
+Deployment targets are declared in `agent.workflow.json`:
 
 ```json
 {
@@ -417,7 +417,7 @@ The tablet profile lets applications apply tablet-specific layouts, signing iden
 
 ## Dependency Contract
 
-Dependencies are declared in `sdkwork.workflow.json`:
+Dependencies are declared in `agent.workflow.json`:
 
 ```json
 {
@@ -477,8 +477,8 @@ npm run workflow:matrix:example
 Render release notes:
 
 ```bash
-node scripts/sdkwork-workflow.mjs changelog \
-  --config examples/sdkwork-cloudrouter/sdkwork.workflow.json \
+node scripts/agent-workflow.mjs changelog \
+  --config examples/sdkwork-cloudrouter/agent.workflow.json \
   --version 0.3.0 \
   --release-tag v0.3.0 \
   --output tmp/release-notes.md
@@ -487,8 +487,8 @@ node scripts/sdkwork-workflow.mjs changelog \
 Render dependency refs from a local file:
 
 ```bash
-node scripts/sdkwork-workflow.mjs dependencies \
-  --config examples/sdkwork-cloudrouter/sdkwork.workflow.json \
+node scripts/agent-workflow.mjs dependencies \
+  --config examples/sdkwork-cloudrouter/agent.workflow.json \
   --dependency-refs-file refs.json \
   --json
 ```
@@ -496,7 +496,7 @@ node scripts/sdkwork-workflow.mjs dependencies \
 Generate an application bootstrap:
 
 ```bash
-node scripts/sdkwork-workflow.mjs init-app \
+node scripts/agent-workflow.mjs init-app \
   --root ../my-app \
   --app-id my-app \
   --repository sdkwork-ai/my-app \

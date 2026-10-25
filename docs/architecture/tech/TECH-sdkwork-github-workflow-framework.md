@@ -17,7 +17,7 @@ The `sdkwork-cloudrouter` workflow demonstrates the required capability set, but
 
 Use an independent reusable workflow repository:
 
-- Application repositories own `sdkwork.workflow.json`.
+- Application repositories own `agent.workflow.json`.
 - Application repositories keep a thin workflow entrypoint that calls `sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-package.yml@v1`.
 - This framework owns reusable orchestration and composite actions.
 - Application-specific build/package/validate commands are declared as lifecycle steps.
@@ -28,7 +28,7 @@ This follows the current GitHub Actions reusable workflow model and avoids vendo
 
 ### Configuration Schema
 
-`schemas/sdkwork-workflow.schema.json` defines the application contract:
+`schemas/agent-workflow.schema.json` defines the application contract:
 
 - `app`: app id, repository, source path.
 - `release`: artifact prefix and default version.
@@ -47,7 +47,7 @@ the primary artifact and writing the canonical JSON document.
 
 ### Planner CLI
 
-`scripts/sdkwork-workflow.mjs` is a zero-dependency Node tool used by tests and workflows.
+`scripts/agent-workflow.mjs` is a zero-dependency Node tool used by tests and workflows.
 
 It provides:
 
@@ -193,7 +193,7 @@ The original workflow contains these framework-level concepts:
 - Artifact upload.
 - GitHub Release upload.
 
-The example `examples/sdkwork-cloudrouter/sdkwork.workflow.json` maps these into:
+The example `examples/sdkwork-cloudrouter/agent.workflow.json` maps these into:
 
 - `dependencies` for appbase/core/ui/im-sdk/sdk-generator.
 - `toolchains` for Node, pnpm, Python, Rust, and WiX.

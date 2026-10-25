@@ -54,3 +54,16 @@ Thumbs.db
 **/public/runtime-env.json
 
 # Build artifacts
+
+# ---- auto-audited: local artifacts that must never be committed ----
+*.key
+*.pem
+*.p12
+*.pfx
+*.keystore
+temp/
+*.tmp
+*.temp
+.cache/
+.turbo/
+.next/

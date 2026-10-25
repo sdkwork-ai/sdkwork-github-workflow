@@ -14,7 +14,7 @@
     "status": "active",
     "manifests": [
       "package.json",
-      "schemas/sdkwork-workflow.schema.json",
+      "schemas/agent-workflow.schema.json",
       ".github/workflows/sdkwork-package.yml"
     ]
   },
@@ -43,11 +43,11 @@
   "contracts": {
     "publicExports": ["."],
     "sdkDependencies": [],
-    "runtimeEntrypoints": ["sdkwork-workflow"],
+    "runtimeEntrypoints": ["agent-workflow"],
     "routeManifest": null,
     "sdkClients": [],
     "events": [],
-    "configKeys": ["sdkwork.workflow.json"]
+    "configKeys": ["agent.workflow.json"]
   },
   "verification": {
     "commands": [

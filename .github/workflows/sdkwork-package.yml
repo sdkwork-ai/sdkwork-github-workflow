@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       config_path:
-        description: Path to sdkwork.workflow.json in the caller repository.
+        description: Path to agent.workflow.json in the caller repository.
         required: false
         type: string
-        default: sdkwork.workflow.json
+        default: agent.workflow.json
       tag:
         description: Git tag, release tag, or source ref to package.
         required: false
@@ -185,7 +185,7 @@ jobs:
           SDKWORK_RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs matrix \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs matrix \
             --config "${SDKWORK_CONFIG_PATH}" \
             --deployment-profile "${SDKWORK_FILTER_DEPLOYMENT_PROFILE}" \
             --runtime-target "${SDKWORK_FILTER_RUNTIME_TARGET}" \
@@ -206,7 +206,7 @@ jobs:
           SDKWORK_DEPENDENCY_REFS_JSON: ${{ inputs.dependency_refs_json }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs dependencies \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs dependencies \
             --config "${SDKWORK_CONFIG_PATH}" \
             --dependency-refs-json "${SDKWORK_DEPENDENCY_REFS_JSON}" \
             --github-output
@@ -225,7 +225,7 @@ jobs:
           SDKWORK_FILTER_FORMAT: ${{ inputs.format }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs deployments \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs deployments \
             --config "${SDKWORK_CONFIG_PATH}" \
             --deployment-profile "${SDKWORK_FILTER_DEPLOYMENT_PROFILE}" \
             --runtime-target "${SDKWORK_FILTER_RUNTIME_TARGET}" \
@@ -469,7 +469,7 @@ jobs:
             if [ -z "${evidence_path}" ]; then
               continue
             fi
-            node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs evidence \
+            node .sdkwork/github-workflow/scripts/agent-workflow.mjs evidence \
               --config "${SDKWORK_CONFIG_PATH}" \
               --target-id "${SDKWORK_TARGET_ID}" \
               --deployment-profile "${SDKWORK_TARGET_DEPLOYMENT_PROFILE}" \
@@ -517,7 +517,7 @@ jobs:
           SDKWORK_RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs changelog \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs changelog \
             --config "${SDKWORK_CONFIG_PATH}" \
             --deployment-profile "${SDKWORK_FILTER_DEPLOYMENT_PROFILE}" \
             --runtime-target "${SDKWORK_FILTER_RUNTIME_TARGET}" \
@@ -623,7 +623,7 @@ jobs:
           SDKWORK_RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs changelog \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs changelog \
             --config "${SDKWORK_CONFIG_PATH}" \
             --deployment-profile "${SDKWORK_FILTER_DEPLOYMENT_PROFILE}" \
             --runtime-target "${SDKWORK_FILTER_RUNTIME_TARGET}" \
@@ -727,7 +727,7 @@ jobs:
           SDKWORK_ARTIFACT_EVIDENCE_INPUT: ${{ format('.sdkwork/artifacts/{0}', matrix.artifactEvidencePath) }}
         run: |
           set -euo pipefail
-          node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs evidence \
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs evidence \
             --config "${SDKWORK_CONFIG_PATH}" \
             --target-id "${SDKWORK_TARGET_ID}" \
             --deployment-profile "${SDKWORK_TARGET_DEPLOYMENT_PROFILE}" \

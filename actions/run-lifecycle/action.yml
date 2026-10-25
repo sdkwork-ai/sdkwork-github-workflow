@@ -3,7 +3,7 @@ description: Run a configured SDKWork application lifecycle phase for one packag
 inputs:
   config-path:
     required: true
-    description: Path to sdkwork.workflow.json.
+    description: Path to agent.workflow.json.
   phase:
     required: true
     description: Lifecycle phase.
@@ -76,7 +76,7 @@ runs:
         SDKWORK_AGGREGATE_RELEASE_INPUT: ${{ inputs.aggregate-release }}
       run: |
         set -euo pipefail
-        node .sdkwork/github-workflow/scripts/sdkwork-workflow.mjs lifecycle \
+        node .sdkwork/github-workflow/scripts/agent-workflow.mjs lifecycle \
           --config "${SDKWORK_CONFIG_PATH}" \
           --phase "${SDKWORK_LIFECYCLE_PHASE}" \
           --target-id "${SDKWORK_TARGET_ID}" \
