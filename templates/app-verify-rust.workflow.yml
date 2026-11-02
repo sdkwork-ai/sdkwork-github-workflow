@@ -1,0 +1,22 @@
+name: Verify Application (Rust)
+
+# Thin verification entrypoint for a Rust-only repository. The cargo gate list
+# comes from `agent.workflow.json` `ci.rust.commands`; never add gates here.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    uses: sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-ci-rust.yml@v1
+    with:
+      config_path: agent.workflow.json
+      framework_ref: v1
+    secrets:
+      SDKWORK_RELEASE_TOKEN: ${{ secrets.SDKWORK_RELEASE_TOKEN }}

@@ -7,6 +7,11 @@ import path from 'node:path';
 import process from 'node:process';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+  defaultTargetsForRuntimeTargets,
+  defaultToolchainsForRuntimeTargets,
+  supportedRuntimeTargets,
+} from './package-mode-starters.mjs';
 
 const SCHEMA_VERSION = '2026-06-06.agent.workflow.v1';
 const SUPPORTED_DEPLOYMENT_PROFILES = Object.freeze(['standalone', 'cloud']);
@@ -82,7 +87,17 @@ const SUPPORTED_CLIENT_ARCHITECTURES = Object.freeze([
   'ios-native',
   'harmony-native',
   'mini-program',
+  'uniapp',
+  'unity',
+  'react-native',
+  'ionic',
 ]);
+// Third-party client frameworks keep arriving (uni-app, Unity, React Native,
+// Ionic, and whatever a product adopts next). The manifest keeps this axis
+// declarative, so the planner validates the token shape and treats the lifecycle
+// hook as the owner of framework-specific tooling instead of growing a closed
+// enum for every framework.
+const CLIENT_ARCHITECTURE_PATTERN = /^[a-z0-9][a-z0-9-]*$/u;
 const SUPPORTED_ARCHITECTURES = Object.freeze(['x64', 'arm64', 'armv7', 'universal', 'wasm32', 'noarch']);
 const SUPPORTED_DEB_DISTRIBUTIONS = Object.freeze(['debian', 'ubuntu']);
 const SUPPORTED_RPM_DISTRIBUTIONS = Object.freeze(['rhel', 'centos', 'fedora', 'opensuse', 'suse']);
@@ -110,6 +125,8 @@ const SUPPORTED_FORMATS = Object.freeze([
   'apk',
   'aab',
   'ipa',
+  'hap',
+  'harmony-app',
   'web',
   'web-url',
   'static',
@@ -118,8 +135,7 @@ const SUPPORTED_FORMATS = Object.freeze([
   'war',
   'other',
 ]);
-const PROFILE_RUNTIME_TARGETS = Object.freeze({
-  browser: ['browser'],
+const PROFILE_RUNTIME_TARGETS = Object.freeze({  browser: ['browser'],
   desktop: ['desktop'],
   mobile: [
     'browser',
@@ -138,6 +154,139 @@ const PROFILE_RUNTIME_TARGETS = Object.freeze({
   worker: ['server', 'container'],
   library: ['browser', 'server', 'container', 'test-runner'],
   test: ['test-runner'],
+});
+// Known client frameworks and the runtime targets they may host. A framework the
+// manifest adopts later stays declarable and skips this pairing; the plugin-free
+// lifecycle hook owns its tooling.
+const CLIENT_ARCHITECTURE_RUNTIME_TARGETS = Object.freeze({
+  'pc-web': ['browser'],
+  h5: ['browser'],
+  capacitor: ['desktop', 'capacitor-ios', 'capacitor-android'],
+  tauri: ['desktop', 'tablet-ipados', 'tablet-android'],
+  electron: ['desktop'],
+  flutter: ['flutter-ios', 'flutter-android'],
+  'android-native': ['android-native', 'tablet-android'],
+  'ios-native': ['ios-native', 'tablet-ipados'],
+  'harmony-native': ['harmony-native'],
+  'mini-program': ['mini-program'],
+});
+const MINI_PROGRAM_PLATFORMS = Object.freeze([
+  'mp-weixin',
+  'mp-alipay',
+  'mp-baidu',
+  'mp-toutiao',
+  'mp-lark',
+  'mp-qq',
+  'mp-kuaishou',
+  'mp-jd',
+  'mp-360',
+  'mp-dingtalk',
+  'mp-ali',
+]);
+// One row per runtime target: what it may produce and where it may build. This is
+// the single source of truth for "does the framework support this application
+// mode" — the planner validates declarations against it, the generator scaffolds
+// from it, and GITHUB_WORKFLOW_SPEC.md publishes it. A new application mode is a
+// row here plus its toolchain hook, not a new workflow.
+const PACKAGE_MODE_REQUIREMENTS = Object.freeze({
+  browser: {
+    platforms: ['web', 'h5', 'h5-weixin'],
+    formats: ['web', 'web-url', 'static', 'zip', 'tar.gz'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: [],
+  },
+  desktop: {
+    platforms: ['windows', 'macos', 'linux', 'windows-tablet'],
+    formats: ['msi', 'msix', 'exe', 'dmg', 'pkg', 'appimage', 'deb', 'rpm', 'snap', 'flatpak', 'zip', 'tar.gz'],
+    runnerPrefixes: ['windows-', 'macos-', 'ubuntu-'],
+    toolchains: [],
+  },
+  'tablet-ipados': {
+    platforms: ['ipados'],
+    formats: ['ipa', 'zip'],
+    runnerPrefixes: ['macos-'],
+    toolchains: ['xcode'],
+  },
+  'tablet-android': {
+    platforms: ['android-tablet'],
+    formats: ['aab', 'apk', 'zip'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: ['java', 'android'],
+  },
+  'capacitor-ios': {
+    platforms: ['ios'],
+    formats: ['ipa', 'zip'],
+    runnerPrefixes: ['macos-'],
+    toolchains: ['xcode'],
+  },
+  'capacitor-android': {
+    platforms: ['android'],
+    formats: ['aab', 'apk', 'zip'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: ['java', 'android'],
+  },
+  'flutter-ios': {
+    platforms: ['ios'],
+    formats: ['ipa', 'zip'],
+    runnerPrefixes: ['macos-'],
+    toolchains: ['flutter', 'xcode'],
+  },
+  'flutter-android': {
+    platforms: ['android'],
+    formats: ['aab', 'apk', 'zip'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: ['flutter', 'java', 'android'],
+  },
+  'android-native': {
+    platforms: ['android'],
+    formats: ['aab', 'apk', 'zip'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: ['java', 'android'],
+  },
+  'ios-native': {
+    platforms: ['ios'],
+    formats: ['ipa', 'zip'],
+    runnerPrefixes: ['macos-'],
+    toolchains: ['xcode'],
+  },
+  'harmony-native': {
+    platforms: ['harmony'],
+    formats: ['hap', 'harmony-app', 'zip'],
+    // DevEco Studio and the HarmonyOS command-line SDK ship for Windows and
+    // macOS; the SDK itself is a licensed download, so the repository installs it
+    // through `ci.setup` (or a self-hosted runner) instead of a public action.
+    runnerPrefixes: ['windows-', 'macos-'],
+    toolchains: [],
+  },
+  'mini-program': {
+    platforms: MINI_PROGRAM_PLATFORMS,
+    formats: ['mini-program-package', 'zip'],
+    runnerPrefixes: ['ubuntu-', 'macos-', 'windows-'],
+    toolchains: [],
+  },
+  server: {
+    platforms: ['linux', 'windows', 'macos'],
+    // A server product also installs as a native package on each host platform,
+    // so the mode accepts the platform installers beside the service archives.
+    formats: ['tar.gz', 'zip', 'deb', 'rpm', 'msi', 'msix', 'pkg', 'exe', 'docker', 'oci', 'jar', 'war', 'other'],
+    runnerPrefixes: ['ubuntu-', 'windows-', 'macos-'],
+    toolchains: [],
+  },
+  container: {
+    // A container image is built for a Linux host and may name that host platform
+    // (`linux`) or the artifact platform (`container`); the canonical package id
+    // follows whichever the target declares.
+    platforms: ['container', 'linux'],
+    formats: ['docker', 'oci', 'helm', 'tar.gz'],
+    runnerPrefixes: ['ubuntu-'],
+    toolchains: [],
+  },
+  'test-runner': {
+    platforms: ['test'],
+    formats: ['zip', 'tar.gz', 'other'],
+    runnerPrefixes: ['ubuntu-', 'windows-', 'macos-'],
+    toolchains: [],
+  },
 });
 const RUNTIME_CONFIGURABLE_RUNTIME_TARGETS = Object.freeze([
   'browser',
@@ -172,15 +321,23 @@ const LIFECYCLE_PHASES = Object.freeze([
   'publish',
 ]);
 const SUPPORTED_DEPENDENCY_TOKEN_SECRET = 'SDKWORK_RELEASE_TOKEN';
+// A repository's role in the workflow system decides which entrypoints the
+// standard requires: an application owns the thin package and verify callers, a
+// `ci-only` repository verifies without packaging, and a `fork-upstream`
+// repository mirrors an upstream project's CI, so it only carries the lane and
+// pin rules its own workflows must still obey.
+const SUPPORTED_WORKFLOW_ROLES = Object.freeze(['application', 'ci-only', 'fork-upstream', 'third-party']);
 const ROOT_CONFIG_KEYS = Object.freeze([
   '$schema',
   'schemaVersion',
+  'workflowRole',
   'app',
   'release',
   'dependencies',
   'verificationDependencies',
   'toolchains',
   'lifecycle',
+  'ci',
   'targets',
   'security',
   'publish',
@@ -197,6 +354,15 @@ const TOOLCHAIN_CONFIG_KEYS = Object.freeze(['node', 'pnpm', 'python', 'java', '
 const TOOLCHAIN_STRING_KEYS = Object.freeze(['node', 'pnpm', 'python', 'java', 'go', 'rust', 'flutter', 'dotnet', 'wix']);
 const TOOLCHAIN_BOOLEAN_KEYS = Object.freeze(['android', 'xcode']);
 const LIFECYCLE_STEP_KEYS = Object.freeze(['name', 'run', 'shell', 'workingDirectory', 'env']);
+// `ci.setup` is the extension point for environment preparation the reusable
+// verification workflow cannot know about (a native toolchain, a package manager
+// outside `toolchains`, a service bootstrap). It uses the lifecycle step schema
+// so a step has one shape and one validator, and it intentionally exposes no
+// `uses`: shared actions belong to the framework.
+// `ci.setup` prepares the environment the reusable verification workflow cannot
+// know about; `ci.rust` declares the cargo gate list for the Rust verification
+// profile, which runs in a workspace with no package scripts.
+const CI_CONFIG_KEYS = Object.freeze(['setup', 'rust']);
 const TARGET_CONFIG_KEYS = Object.freeze([
   'id',
   'packageId',
@@ -262,9 +428,10 @@ Commands:
   toolchains     Render declared toolchain setup metadata.
   changelog      Render release changelog / GitHub Release notes.
   lifecycle      Render one lifecycle phase execution plan.
+  ci-setup       Execute the declared ci.setup environment-preparation steps.
   evidence       Verify artifact evidence against one selected package target.
   evidence:create Create artifact evidence from a packaged file or OCI image manifest and references.
-  init-app       Generate agent.workflow.json and package workflow for an app.
+  init-app       Generate agent.workflow.json and both workflow entrypoints for an app.
 
 Options:
   --config <path>        Config path (default agent.workflow.json).
@@ -310,6 +477,7 @@ Options:
   --repository <owner/repo>
                          Application GitHub repository for init-app.
   --profiles <csv>        Comma-separated profiles for init-app.
+  --runtime-targets <csv> Comma-separated runtime targets (application modes) for init-app.
   --framework-ref <ref>   Framework ref used by generated package workflow.
   --force                Overwrite generated files in init-app.
   --run                  Execute lifecycle phase instead of only rendering it.
@@ -505,6 +673,10 @@ function parseArgs(argv = process.argv.slice(2)) {
         settings.profiles = requireValue(argv, index, arg);
         index += 1;
         break;
+      case '--runtime-targets':
+        settings.runtimeTargets = requireValue(argv, index, arg);
+        index += 1;
+        break;
       case '--framework-ref':
         settings.frameworkRef = requireValue(argv, index, arg);
         index += 1;
@@ -627,6 +799,12 @@ function validateWorkflowConfig(config) {
   if (config.schemaVersion !== SCHEMA_VERSION) {
     issues.push(`schemaVersion must be ${SCHEMA_VERSION}`);
   }
+  if (config.workflowRole !== undefined) {
+    validateOptionalString(config.workflowRole, 'workflowRole', issues);
+    if (typeof config.workflowRole === 'string' && !SUPPORTED_WORKFLOW_ROLES.includes(config.workflowRole)) {
+      issues.push(`workflowRole must be one of ${SUPPORTED_WORKFLOW_ROLES.join(', ')}`);
+    }
+  }
 
   validateObject(config.app, 'app', issues);
   validateKnownProperties(config.app, 'app', APP_CONFIG_KEYS, issues);
@@ -687,8 +865,33 @@ function validateWorkflowConfig(config) {
   if (config.lifecycle !== undefined) {
     validateLifecycle(config.lifecycle, issues);
   }
+  if (config.ci !== undefined) {
+    validateObject(config.ci, 'ci', issues);
+    validateKnownProperties(config.ci, 'ci', CI_CONFIG_KEYS, issues);
+    if (config.ci?.setup !== undefined) {
+      validateArray(config.ci.setup, 'ci.setup', issues);
+      if (Array.isArray(config.ci.setup)) {
+        config.ci.setup.forEach((step, index) => validateLifecycleStep(step, `ci.setup[${index}]`, issues));
+      }
+    }
+    if (config.ci?.rust !== undefined) {
+      validateObject(config.ci.rust, 'ci.rust', issues);
+      validateKnownProperties(config.ci.rust, 'ci.rust', ['commands'], issues);
+      validateArray(config.ci.rust?.commands, 'ci.rust.commands', issues, { minLength: 1 });
+      if (Array.isArray(config.ci.rust?.commands)) {
+        config.ci.rust.commands.forEach((command, index) => {
+          validateRequiredString(command, `ci.rust.commands[${index}]`, issues);
+          if (typeof command === 'string' && /\$\{\{\s*inputs\./u.test(command)) {
+            issues.push(`ci.rust.commands[${index}] must not embed reusable workflow inputs`);
+          }
+        });
+      }
+    }
+  }
 
-  validateArray(config.targets, 'targets', issues, { minLength: 1 });
+  // A `ci-only` repository packages nothing, so it declares no target; every
+  // packaging role must declare at least one.
+  validateArray(config.targets, 'targets', issues, { minLength: config.workflowRole === 'ci-only' || config.workflowRole === 'third-party' ? 0 : 1 });
   if (Array.isArray(config.targets)) {
     const seenIds = new Set();
     const seenPackageIds = new Set();
@@ -875,6 +1078,7 @@ function validateTarget(target, index, issues, seenIds, seenPackageIds) {
   }
   validateLinuxDistribution(target, label, issues);
   validateTargetRuntimeConsistency(target, label, issues);
+  validateTargetPackageMode(target, label, issues);
   validateTargetId(target, label, issues);
   validateTargetPackageId(target, label, issues);
   validateUniquePackageIds(target, label, issues, seenPackageIds);
@@ -902,12 +1106,15 @@ function validateTargetClientAxes(target, label, issues) {
     }
   }
   if (target?.clientArchitecture !== undefined) {
-    validateEnum(
-      target.clientArchitecture,
-      `${label}.clientArchitecture`,
-      SUPPORTED_CLIENT_ARCHITECTURES,
-      issues,
-    );
+    // Known frameworks pin the runtime target they host; any other token is a
+    // third-party framework the lifecycle owns, gated only by the client-runtime
+    // rule below.
+    if (!CLIENT_ARCHITECTURE_PATTERN.test(String(target.clientArchitecture))) {
+      issues.push(`${label}.clientArchitecture must be a lowercase token such as ${SUPPORTED_CLIENT_ARCHITECTURES.join(', ')}`);
+    } else if (CLIENT_ARCHITECTURE_RUNTIME_TARGETS[target.clientArchitecture] !== undefined
+      && !CLIENT_ARCHITECTURE_RUNTIME_TARGETS[target.clientArchitecture].includes(target.runtimeTarget)) {
+      issues.push(`${label}.clientArchitecture ${target.clientArchitecture} must pair with runtimeTarget ${CLIENT_ARCHITECTURE_RUNTIME_TARGETS[target.clientArchitecture].join(', ')}`);
+    }
     if (!RUNTIME_CONFIGURABLE_RUNTIME_TARGETS.includes(target.runtimeTarget)) {
       issues.push(`${label}.clientArchitecture is valid only for client runtime targets`);
     }
@@ -992,8 +1199,36 @@ function validateTargetRuntimeConsistency(target, label, issues) {
   }
 }
 
-function validateLinuxDistribution(target, label, issues) {
-  if (!Array.isArray(target?.formats) || target.formats.length === 0) {
+/**
+ * Validate one target against the packaging requirements of its application mode.
+ *
+ * The mode table owns which platform, artifact formats, and runner can produce a
+ * runtime target; a declaration that contradicts it would fail only on the runner,
+ * so it fails here instead.
+ * @param {object} target - Package target declaration.
+ * @param {string} label - Issue label.
+ * @param {string[]} issues - Collected issues.
+ */
+function validateTargetPackageMode(target, label, issues) {
+  const mode = PACKAGE_MODE_REQUIREMENTS[target?.runtimeTarget];
+  if (mode === undefined) return;
+  if (typeof target.platform === 'string' && !mode.platforms.includes(target.platform)) {
+    issues.push(`${label}.platform ${target.platform} cannot produce runtimeTarget ${target.runtimeTarget}; expected ${mode.platforms.join(', ')}`);
+  }
+  if (Array.isArray(target.formats)) {
+    target.formats.forEach((format, index) => {
+      if (typeof format === 'string' && !mode.formats.includes(format)) {
+        issues.push(`${label}.formats[${index}] ${format} is not a ${target.runtimeTarget} artifact; expected ${mode.formats.join(', ')}`);
+      }
+    });
+  }
+  if (typeof target.runner === 'string' && target.runner.trim() !== ''
+    && !mode.runnerPrefixes.some((prefix) => target.runner.startsWith(prefix))) {
+    issues.push(`${label}.runner ${target.runner} cannot build runtimeTarget ${target.runtimeTarget}; expected ${mode.runnerPrefixes.join(', ')}*`);
+  }
+}
+
+function validateLinuxDistribution(target, label, issues) {  if (!Array.isArray(target?.formats) || target.formats.length === 0) {
     return;
   }
 
@@ -2443,6 +2678,44 @@ async function runLifecyclePlan(plan, { env = process.env } = {}) {
   };
 }
 
+/**
+ * Render the environment-preparation plan the verification workflow executes.
+ *
+ * The plan carries no `uses` and no framework knowledge: each entry is one shell
+ * command from `ci.setup`, run in declaration order before the gate scripts.
+ * @param {object} config - Validated `agent.workflow.json`.
+ * @returns {{ steps: Array<{ name: string, run: string, shell?: string, workingDirectory?: string, env?: Record<string, string> }> }} Setup plan.
+ */
+function createCiSetupPlan(config) {
+  const root = process.cwd();
+  const steps = (config?.ci?.setup ?? []).map((step, index) => ({
+    name: typeof step.name === 'string' && step.name.trim() !== '' ? step.name : `ci.setup[${index}]`,
+    run: step.run,
+    shell: step.shell,
+    workingDirectory: step.workingDirectory === undefined ? undefined : path.resolve(root, step.workingDirectory),
+    env: step.env ?? {},
+  }));
+  return { steps };
+}
+
+async function runCiSetupPlan(config, { env = process.env } = {}) {
+  const plan = createCiSetupPlan(config);
+  const results = [];
+  for (const [index, step] of plan.steps.entries()) {
+    console.log(`[agent-workflow] ci.setup[${index}] ${step.name}`);
+    const result = await runShellCommand(step.run, {
+      shell: step.shell ?? defaultShellForHost(),
+      cwd: step.workingDirectory,
+      env: { ...env, ...step.env },
+    });
+    results.push({ name: step.name, exitCode: result.exitCode });
+    if (result.stdout) process.stdout.write(result.stdout);
+    if (result.stderr) process.stderr.write(result.stderr);
+    if (result.exitCode !== 0) return { ok: false, steps: results };
+  }
+  return { ok: true, steps: results };
+}
+
 function runShellCommand(command, { shell = defaultShellForHost(), cwd = process.cwd(), env = process.env } = {}) {
   const invocation = shellInvocation(shell, command);
   return new Promise((resolve) => {
@@ -2517,6 +2790,7 @@ async function initApplicationWorkflow({
   appName = null,
   repository,
   profiles = ['server'],
+  runtimeTargets = null,
   frameworkRef = 'v1',
   force = false,
 } = {}) {
@@ -2525,22 +2799,34 @@ async function initApplicationWorkflow({
   if (!isSafeGitRef(frameworkRef)) {
     throw new Error('frameworkRef must be a safe git ref');
   }
-  const normalizedProfiles = normalizeProfiles(profiles);
+  const requestedRuntimeTargets = normalizeRuntimeTargets(runtimeTargets);
+  const normalizedProfiles = normalizeProfiles(requestedRuntimeTargets === null
+    ? profiles
+    : [...new Set(defaultTargetsForRuntimeTargets(requestedRuntimeTargets).map((target) => target.profile))]);
   const config = createInitialWorkflowConfig({
     appId,
     appName,
     repository,
     profiles: normalizedProfiles,
   });
+  if (requestedRuntimeTargets !== null) {
+    // Every application mode is scaffolded from the mode tables, so a generated
+    // configuration starts valid and complete instead of relying on the caller to
+    // know the canonical ids, formats, runners, and toolchains.
+    config.targets = defaultTargetsForRuntimeTargets(requestedRuntimeTargets);
+    config.toolchains = defaultToolchainsForRuntimeTargets(requestedRuntimeTargets);
+  }
   const issues = validateWorkflowConfig(config);
   if (issues.length > 0) {
     throw new Error(`Generated workflow config is invalid: ${issues.join('; ')}`);
   }
   const workflowContent = await createApplicationPackageWorkflow({ frameworkRef });
+  const verifyWorkflowContent = await createApplicationVerifyWorkflow({ frameworkRef });
 
   const absoluteRoot = path.resolve(root);
   const configPath = path.join(absoluteRoot, 'agent.workflow.json');
   const workflowPath = path.join(absoluteRoot, '.github', 'workflows', 'package.yml');
+  const verifyWorkflowPath = path.join(absoluteRoot, '.github', 'workflows', 'verify.yml');
   const files = [
     {
       path: configPath,
@@ -2549,6 +2835,10 @@ async function initApplicationWorkflow({
     {
       path: workflowPath,
       content: workflowContent,
+    },
+    {
+      path: verifyWorkflowPath,
+      content: verifyWorkflowContent,
     },
   ];
 
@@ -2567,6 +2857,20 @@ async function initApplicationWorkflow({
     root: absoluteRoot,
     written: files.map((file) => file.path),
   };
+}
+
+function normalizeRuntimeTargets(runtimeTargets) {
+  if (runtimeTargets === null || runtimeTargets === undefined) return null;
+  const values = Array.isArray(runtimeTargets) ? runtimeTargets : String(runtimeTargets).split(',');
+  const normalized = [...new Set(values.map((value) => String(value).trim()).filter(Boolean))];
+  if (normalized.length === 0) return null;
+  const supported = supportedRuntimeTargets();
+  for (const runtimeTarget of normalized) {
+    if (!supported.includes(runtimeTarget)) {
+      throw new Error(`Unsupported runtime target: ${runtimeTarget}; expected one of ${supported.join(', ')}`);
+    }
+  }
+  return normalized;
 }
 
 function normalizeProfiles(profiles) {
@@ -2997,6 +3301,19 @@ async function createApplicationPackageWorkflow({ frameworkRef = 'v1' } = {}) {
     .replaceAll('framework_ref: v1', `framework_ref: ${frameworkRef}`);
 }
 
+/**
+ * Render the thin verification entrypoint for an application repository.
+ * @param {{ frameworkRef?: string }} [options] - Framework ref to pin in the reusable workflow call.
+ * @returns {Promise<string>} Workflow YAML rendered from the checked-in template.
+ */
+async function createApplicationVerifyWorkflow({ frameworkRef = 'v1' } = {}) {
+  const templatePath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'templates', 'app-verify.workflow.yml');
+  const template = await readFile(templatePath, 'utf8');
+  return template
+    .replaceAll('sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-ci.yml@v1', `sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-ci.yml@${frameworkRef}`)
+    .replaceAll('framework_ref: v1', `framework_ref: ${frameworkRef}`);
+}
+
 function unique(values) {
   return [...new Set(values)].sort();
 }
@@ -3038,6 +3355,7 @@ async function main(argv = process.argv.slice(2), env = process.env) {
       appName: settings.appName,
       repository: settings.repository,
       profiles: settings.profiles,
+      runtimeTargets: settings.runtimeTargets ?? null,
       frameworkRef: settings.frameworkRef,
       force: settings.force,
     });
@@ -3282,6 +3600,17 @@ async function main(argv = process.argv.slice(2), env = process.env) {
     return 0;
   }
 
+  if (settings.command === 'ci-setup') {
+    const plan = createCiSetupPlan(config);
+    if (settings.json) {
+      console.log(JSON.stringify({ ok: true, ciSetup: plan }, null, 2));
+      return 0;
+    }
+    console.log(`[agent-workflow] ci.setup: ${plan.steps.length} step(s)`);
+    const result = await runCiSetupPlan(config, { env });
+    return result.ok ? 0 : 1;
+  }
+
   throw new Error(`Unsupported command: ${settings.command}`);
 }
 
@@ -3305,6 +3634,7 @@ if (invokedPath && sameModulePath(invokedPath, WORKFLOW_CLI_PATH)) {
 
 export {
   SCHEMA_VERSION,
+  PACKAGE_MODE_REQUIREMENTS,
   SUPPORTED_ARCHITECTURES,
   SUPPORTED_CLIENT_ARCHITECTURES,
   SUPPORTED_DEPLOYMENT_PROFILES,
@@ -3316,6 +3646,8 @@ export {
   createDependencyPlan,
   createDeploymentMatrix,
   createArtifactEvidence,
+  createCiSetupPlan,
+  createApplicationVerifyWorkflow,
   createLifecyclePlan,
   createPackageMatrix,
   createReleaseNotes,
@@ -3326,6 +3658,7 @@ export {
   main,
   parseArgs,
   redactSecretLikeValue,
+  runCiSetupPlan,
   runLifecyclePlan,
   runShellCommand,
   stripJsonComments,

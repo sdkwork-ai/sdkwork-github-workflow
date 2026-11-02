@@ -22,6 +22,7 @@ const REQUIRED_FILES = Object.freeze([
   '.sdkwork/skills/README.md',
   '.sdkwork/plugins/README.md',
   '.github/workflows/sdkwork-package.yml',
+  '.github/workflows/sdkwork-ci.yml',
   'actions/validate-config/action.yml',
   'actions/checkout-dependencies/action.yml',
   'actions/setup-toolchains/action.yml',
@@ -29,7 +30,10 @@ const REQUIRED_FILES = Object.freeze([
   'actions/publish-release/action.yml',
   'schemas/agent-workflow.schema.json',
   'scripts/agent-workflow.mjs',
+  'scripts/package-mode-starters.mjs',
+  'scripts/render-app-workflows.mjs',
   'templates/app-package.workflow.yml',
+  'templates/app-verify.workflow.yml',
   'agent.app.config.json',
   'examples/sdkwork-cloudrouter/agent.workflow.json',
   'examples/mobile-flutter/agent.workflow.json',
@@ -290,6 +294,18 @@ async function validateGenerator(issues) {
     const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
     const configIssues = validateWorkflowConfig(config);
     issues.push(...configIssues.map((issue) => `generated init-app config: ${issue}`));
+    // A generator that drifts from a checked-in template silently changes what a
+    // new repository commits, so both entrypoints must render their template.
+    for (const [generatedPath, templatePath] of [
+      ['package.yml', 'templates/app-package.workflow.yml'],
+      ['verify.yml', 'templates/app-verify.workflow.yml'],
+    ]) {
+      const generated = readFileSync(path.join(root, '.github', 'workflows', generatedPath), 'utf8');
+      const template = readFileSync(path.resolve(templatePath), 'utf8');
+      if (generated !== template) {
+        issues.push(`generated .github/workflows/${generatedPath} does not match ${templatePath}`);
+      }
+    }
   } finally {
     await rm(root, { recursive: true, force: true });
   }

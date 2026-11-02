@@ -1,0 +1,142 @@
+name: SDKWork CI Framework (Rust)
+
+# Reusable verification workflow for Rust-only repositories. A repository keeps
+# one thin `verify.yml` that calls this workflow; the toolchain and the gate
+# commands come from the repository's `agent.workflow.json` (`toolchains.rust`
+# and `ci.rust.commands`), so the cargo gate list is configuration, not YAML.
+on:
+  workflow_call:
+    inputs:
+      config_path:
+        description: Path to agent.workflow.json in the caller repository.
+        required: false
+        type: string
+        default: agent.workflow.json
+      commands:
+        description: Newline-separated cargo commands to run when ci.rust.commands is not declared.
+        required: false
+        type: string
+        default: |-
+          cargo fmt --all -- --check
+          cargo clippy --workspace --all-targets -- -D warnings
+          cargo test --workspace
+      os_matrix:
+        description: JSON array of runner labels, one verification job per entry.
+        required: false
+        type: string
+        default: '["ubuntu-24.04"]'
+      framework_ref:
+        description: sdkwork-github-workflow ref used to checkout framework scripts.
+        required: false
+        type: string
+        default: main
+    secrets:
+      SDKWORK_RELEASE_TOKEN:
+        description: Token used for private dependency checkouts.
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sdkwork-ci-rust-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verify Rust ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.os_matrix) }}
+    steps:
+      - name: Checkout application source
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout workflow framework
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: sdkwork-ai/sdkwork-github-workflow
+          ref: ${{ inputs.framework_ref }}
+          path: .sdkwork/github-workflow
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate workflow config
+        uses: ./.sdkwork/github-workflow/actions/validate-config
+        with:
+          config-path: ${{ inputs.config_path }}
+
+      - id: dependencies
+        name: Resolve dependency checkout plan
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+        run: |
+          set -euo pipefail
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs dependencies \
+            --config "${SDKWORK_CONFIG_PATH}" \
+            --github-output
+
+      - name: Checkout declared dependencies
+        uses: ./.sdkwork/github-workflow/actions/checkout-dependencies
+        with:
+          dependencies-json: ${{ steps.dependencies.outputs.dependencies }}
+          token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
+
+      - name: Set up declared toolchains
+        uses: ./.sdkwork/github-workflow/actions/setup-toolchains
+        with:
+          config-path: ${{ inputs.config_path }}
+
+      - name: Run declared CI setup steps
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+        run: |
+          set -euo pipefail
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs ci-setup \
+            --config "${SDKWORK_CONFIG_PATH}"
+
+      - name: Run Rust gates
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+          SDKWORK_RUST_COMMANDS: ${{ inputs.commands }}
+        run: |
+          set -euo pipefail
+          # A repository may override the cargo gate list in
+          # `agent.workflow.json` (`ci.rust.commands`); the input is the default.
+          declared="$(node -e "
+            const { readFileSync } = require('node:fs');
+            const config = JSON.parse(readFileSync(process.env.SDKWORK_CONFIG_PATH, 'utf8'));
+            const commands = config?.ci?.rust?.commands ?? [];
+            process.stdout.write(Array.isArray(commands) ? commands.join('\n') : '');
+          ")"
+          if [ -n "$declared" ]; then
+            commands="$declared"
+          else
+            commands="$SDKWORK_RUST_COMMANDS"
+          fi
+          printf '%s\n' "$commands" | while IFS= read -r command; do
+            [ -n "$command" ] || continue
+            echo "::group::rust gate: $command"
+            bash -c "$command"
+            echo "::endgroup::"
+          done
+
+      - name: Summarize verification
+        if: success()
+        shell: bash
+        env:
+          SDKWORK_VERIFY_RUNNER: ${{ matrix.os }}
+        run: |
+          {
+            echo "### SDKWork Rust verification"
+            echo
+            echo "- runner: \`${SDKWORK_VERIFY_RUNNER}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

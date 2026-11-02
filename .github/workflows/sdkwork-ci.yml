@@ -1,0 +1,174 @@
+name: SDKWork CI Framework
+
+# Reusable verification workflow for SDKWork repositories. Applications keep one
+# thin `.github/workflows/verify.yml` that calls this workflow; the toolchain
+# versions, dependency checkouts, install command, and gate list come from the
+# application's `agent.workflow.json` and package scripts, so no repository
+# repeats runner setup, action pins, or install logic in its own YAML.
+#
+# The package workflow (`sdkwork-package.yml`) owns release packaging; this
+# workflow owns push/pull-request verification, which is the same gate a release
+# must pass before it can publish. Both read the same planner, so a repository
+# cannot verify one thing and release another.
+
+on:
+  workflow_call:
+    inputs:
+      config_path:
+        description: Path to agent.workflow.json in the caller repository.
+        required: false
+        type: string
+        default: agent.workflow.json
+      scripts:
+        description: Comma- or newline-separated package-manager script names to run as the gate.
+        required: false
+        type: string
+        default: verify
+      install_command:
+        description: Package-manager install command; blank skips the install step.
+        required: false
+        type: string
+        default: pnpm install --frozen-lockfile
+      os_matrix:
+        description: JSON array of runner labels, one verification job per entry.
+        required: false
+        type: string
+        default: '["ubuntu-24.04"]'
+      framework_ref:
+        description: sdkwork-github-workflow ref used to checkout framework scripts.
+        required: false
+        type: string
+        default: main
+      dependency_refs_json:
+        description: JSON object mapping dependency ref input names to refs.
+        required: false
+        type: string
+        default: '{}'
+      timeout_minutes:
+        description: Per-runner verification timeout.
+        required: false
+        type: number
+        default: 45
+    secrets:
+      SDKWORK_RELEASE_TOKEN:
+        description: Token used for private dependency checkouts.
+        required: false
+
+permissions:
+  contents: read
+
+# A superseded push must not keep a stale verification run queued behind the new
+# head: the verdict belongs to the newest commit on the ref.
+concurrency:
+  group: sdkwork-ci-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    # One job per runner the caller enrolls, named by that runner so a failure
+    # and its retry identify the platform instead of an anonymous matrix index.
+    name: Verify ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJson(inputs.os_matrix) }}
+    steps:
+      - name: Checkout application source
+        uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Checkout workflow framework
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: sdkwork-ai/sdkwork-github-workflow
+          ref: ${{ inputs.framework_ref }}
+          path: .sdkwork/github-workflow
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Validate workflow config
+        uses: ./.sdkwork/github-workflow/actions/validate-config
+        with:
+          config-path: ${{ inputs.config_path }}
+
+      - id: dependencies
+        name: Resolve dependency checkout plan
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+          SDKWORK_DEPENDENCY_REFS_JSON: ${{ inputs.dependency_refs_json }}
+        run: |
+          set -euo pipefail
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs dependencies \
+            --config "${SDKWORK_CONFIG_PATH}" \
+            --dependency-refs-json "${SDKWORK_DEPENDENCY_REFS_JSON}" \
+            --github-output
+
+      - name: Checkout declared dependencies
+        uses: ./.sdkwork/github-workflow/actions/checkout-dependencies
+        with:
+          dependencies-json: ${{ steps.dependencies.outputs.dependencies }}
+          token: ${{ secrets.SDKWORK_RELEASE_TOKEN || github.token }}
+
+      - name: Set up declared toolchains
+        uses: ./.sdkwork/github-workflow/actions/setup-toolchains
+        with:
+          config-path: ${{ inputs.config_path }}
+
+      - name: Install dependencies
+        if: inputs.install_command != ''
+        shell: bash
+        env:
+          SDKWORK_INSTALL_COMMAND: ${{ inputs.install_command }}
+        run: |
+          set -euo pipefail
+          # A package-manager command line, not a shell program: word splitting is
+          # the whole evaluation this input needs, and eval would make repository
+          # configuration arbitrary shell.
+          $SDKWORK_INSTALL_COMMAND
+
+      # A repository whose gates need an environment the standard toolchains do
+      # not provide (a native package manager, a service bootstrap) declares the
+      # preparation in `ci.setup` instead of forking this workflow.
+      - name: Run declared CI setup steps
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+        run: |
+          set -euo pipefail
+          node .sdkwork/github-workflow/scripts/agent-workflow.mjs ci-setup \
+            --config "${SDKWORK_CONFIG_PATH}"
+
+      - name: Run verification scripts
+        shell: bash
+        env:
+          SDKWORK_VERIFY_SCRIPTS: ${{ inputs.scripts }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$SDKWORK_VERIFY_SCRIPTS" | tr ',' '\n' | tr -d '\r' | while IFS= read -r entry; do
+            script="$(printf '%s' "$entry" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+            [ -n "$script" ] || continue
+            echo "::group::verify: pnpm run $script"
+            pnpm run "$script"
+            echo "::endgroup::"
+          done
+
+      - name: Summarize verification
+        if: success()
+        shell: bash
+        env:
+          SDKWORK_CONFIG_PATH: ${{ inputs.config_path }}
+          SDKWORK_VERIFY_SCRIPTS: ${{ inputs.scripts }}
+          SDKWORK_VERIFY_RUNNER: ${{ matrix.os }}
+        run: |
+          set -euo pipefail
+          {
+            echo "### SDKWork verification"
+            echo
+            echo "- configuration: \`${SDKWORK_CONFIG_PATH}\`"
+            echo "- runner: \`${SDKWORK_VERIFY_RUNNER}\`"
+            echo "- scripts: \`${SDKWORK_VERIFY_SCRIPTS}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

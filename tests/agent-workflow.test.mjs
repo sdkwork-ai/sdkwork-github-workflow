@@ -2282,11 +2282,17 @@ test('initializes an application workflow without overwriting existing files', a
     frameworkRef: 'v1',
   });
 
-  assert.equal(result.written.length, 2);
+  assert.equal(result.written.length, 3);
   const config = await loadWorkflowConfig(path.join(root, 'agent.workflow.json'));
   assert.deepEqual(validateWorkflowConfig(config), []);
   assert.equal(config.app.id, 'demo-app');
   assert.ok(config.targets.some((target) => target.profile === 'tablet'));
+  const verifyWorkflow = await import('node:fs/promises').then((fs) =>
+    fs.readFile(path.join(root, '.github/workflows/verify.yml'), 'utf8')
+  );
+  assert.ok(verifyWorkflow.includes('sdkwork-ai/sdkwork-github-workflow/.github/workflows/sdkwork-ci.yml@v1'));
+  assert.ok(verifyWorkflow.includes('scripts: verify'));
+  assert.ok(!verifyWorkflow.includes('pnpm/action-setup'));
   const workflow = await import('node:fs/promises').then((fs) =>
     fs.readFile(path.join(root, '.github/workflows/package.yml'), 'utf8')
   );
@@ -2380,6 +2386,59 @@ test('init-app renders the checked-in application workflow template', async () =
   const template = await readFile('templates/app-package.workflow.yml', 'utf8');
 
   assert.equal(generated, template);
+});
+
+test('init-app renders the checked-in verification workflow template', async () => {
+  const root = path.join(tempRoot, 'init-app-verify-template');
+  await rm(root, { recursive: true, force: true });
+  await mkdir(root, { recursive: true });
+
+  await initApplicationWorkflow({
+    root,
+    appId: 'verify-template-demo',
+    repository: 'sdkwork-ai/verify-template-demo',
+    profiles: ['server'],
+    frameworkRef: 'v1',
+  });
+
+  const generated = await readFile(path.join(root, '.github/workflows/verify.yml'), 'utf8');
+  const template = await readFile('templates/app-verify.workflow.yml', 'utf8');
+  assert.equal(generated, template);
+});
+
+test('verification workflow keeps runner setup, dependency checkout, and gates out of the caller', async () => {
+  const workflow = await readFile('.github/workflows/sdkwork-ci.yml', 'utf8');
+  const template = await readFile('templates/app-verify.workflow.yml', 'utf8');
+
+  // The caller owns triggers and the gate list only: everything else must come
+  // from the reusable workflow so a repository cannot drift its CI setup.
+  assert.match(template, /uses: sdkwork-ai\/sdkwork-github-workflow\/\.github\/workflows\/sdkwork-ci\.yml@v1/u);
+  assert.match(template, /scripts: verify/u);
+  assert.doesNotMatch(template, /pnpm\/action-setup|actions\/setup-node/u);
+  assert.doesNotMatch(template, /run:/u);
+
+  // One attributable job per runner, read-only permissions, superseded runs
+  // cancelled: the same three properties the package workflow gives packaging.
+  assert.match(workflow, /name: Verify \$\{\{ matrix\.os \}\}/u);
+  assert.match(workflow, /os: \$\{\{ fromJson\(inputs\.os_matrix\) \}\}/u);
+  assert.match(workflow, /permissions:\n  contents: read\n/u);
+  assert.match(workflow, /cancel-in-progress: true/u);
+  assert.match(workflow, /uses: actions\/checkout@v7\.0\.1/u);
+
+  // The gate is the planner's dependency plan plus the declared scripts, never
+  // an inline command copied into the workflow body.
+  for (const action of ['validate-config', 'checkout-dependencies', 'setup-toolchains']) {
+    assert.match(workflow, new RegExp(`uses: \\./\\.sdkwork/github-workflow/actions/${action}`, 'u'));
+  }
+  assert.match(workflow, /pnpm run "\$script"/u);
+
+  // Framework validation rejects input expressions inside literal run blocks, so
+  // the workflow itself must pass them through the environment.
+  const runBlocks = [...workflow.matchAll(/run: \|\n(?<body>(?:\s{10,}.*\n)+)/gu)].map((match) => match.groups.body);
+  assert.ok(runBlocks.length > 0);
+  for (const body of runBlocks) {
+    assert.doesNotMatch(body, /\$\{\{\s*inputs\./u);
+  }
 });
 
 test('CLI init-app does not require an existing workflow config', async () => {
@@ -3324,4 +3383,17 @@ test('reusable workflow passes dependency refs JSON through an environment varia
   assert.match(workflow, /SDKWORK_DEPENDENCY_REFS_JSON: \$\{\{ inputs\.dependency_refs_json \}\}/u);
   assert.match(workflow, /--dependency-refs-json "\$\{SDKWORK_DEPENDENCY_REFS_JSON\}"/u);
   assert.doesNotMatch(workflow, /--dependency-refs-json '\$\{\{ inputs\.dependency_refs_json \}\}'/u);
+});
+
+test('workflowRole declares the repository role and rejects unknown roles', async () => {
+  const config = await loadWorkflowConfig('examples/sdkwork-cloudrouter/agent.workflow.json');
+
+  for (const role of ['application', 'ci-only', 'fork-upstream']) {
+    assert.deepEqual(validateWorkflowConfig({ ...config, workflowRole: role }), []);
+  }
+  assert.deepEqual(validateWorkflowConfig(config), [], 'an omitted workflowRole stays valid as the application default');
+  assert.match(
+    validateWorkflowConfig({ ...config, workflowRole: 'upstream' }).join('; '),
+    /workflowRole must be one of application, ci-only, fork-upstream, third-party/u,
+  );
 });
