@@ -128,9 +128,13 @@ export function checkReleaseAccessTokenEnv(rootDir, { environments = DEFAULT_REL
       ? { root, checked: [], failures: [], skipped: true }
       : { root, checked: [], failures: [{ profileId: '<surfaces>', reason: 'no client surface declares an access token' }] };
   }
+  const clientSurfaces = surfaces.filter((surface) => surface.format !== 'none');
+  if (clientSurfaces.length === 0) {
+    return { root, checked: [], failures: [], skipped: true };
+  }
   const checked = [];
   const failures = [];
-  for (const surface of surfaces) {
+  for (const surface of clientSurfaces) {
     if (surface.format === 'none') continue;
     const appRoot = path.join(root, String(surface.root ?? ''));
     const manifestPath = path.join(appRoot, 'agent.app.config.json');
