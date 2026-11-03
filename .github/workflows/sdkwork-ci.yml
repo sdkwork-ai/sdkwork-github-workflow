@@ -99,8 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           node .sdkwork/github-workflow/scripts/check-release-access-token-env.mjs \
-            --root . \
-            --allow-no-surfaces
+            --root .
 
       - id: dependencies
         name: Resolve dependency checkout plan
