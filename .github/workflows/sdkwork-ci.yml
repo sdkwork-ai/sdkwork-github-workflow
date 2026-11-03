@@ -94,6 +94,14 @@ jobs:
         with:
           config-path: ${{ inputs.config_path }}
 
+      - name: Require release access tokens
+        shell: bash
+        run: |
+          set -euo pipefail
+          node .sdkwork/github-workflow/scripts/check-release-access-token-env.mjs \
+            --root . \
+            --allow-no-surfaces
+
       - id: dependencies
         name: Resolve dependency checkout plan
         shell: bash

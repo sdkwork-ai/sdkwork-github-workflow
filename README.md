@@ -326,6 +326,23 @@ The standard application workflow supports three entrypoints:
 - `release.published`: package and run configured deployments by default.
 - `workflow_dispatch`: manually package or deploy a selected deployment profile, runtime target, platform, package profile, architecture, variant, or format.
 
+## Release Access-Token Preflight
+
+Both reusable workflows run
+`scripts/check-release-access-token-env.mjs` immediately after
+`validate-config`, before planning, packaging, or deployment. The check fails
+the workflow when any declared `test`, `staging`, `demo`, or `production` client
+surface has a missing, empty, or mismatched public application access token.
+
+The same check is available locally:
+
+```bash
+node ../sdkwork-specs/tools/check-release-access-token-env.mjs --root .
+```
+
+Repositories should wire it into a pre-commit hook. `sdkwork-im` ships
+`.githooks/pre-commit` and installs it through `scripts/dev/install-git-hooks.mjs`.
+
 ## Lifecycle Contract
 
 The framework executes configured phases in this order:
