@@ -33,9 +33,9 @@
     "cloud.production": "etc/topology/cloud.production.env"
   },
   "envKeys": {
-    "deploymentProfile": "SDKWORK_GITHUB_WORKFLOW_DEPLOYMENT_PROFILE",
-    "environment": "SDKWORK_GITHUB_WORKFLOW_ENVIRONMENT",
-    "profileId": "SDKWORK_GITHUB_WORKFLOW_PROFILE_ID",
+    "deploymentProfile": "SDKWORK_DEPLOYMENT_PROFILE",
+    "environment": "SDKWORK_ENVIRONMENT",
+    "profileId": "SDKWORK_PROFILE_ID",
     "clientDeploymentProfile": "VITE_SDKWORK_GITHUB_WORKFLOW_DEPLOYMENT_PROFILE",
     "standaloneGatewayBind": "SDKWORK_GITHUB_WORKFLOW_APPLICATION_PUBLIC_INGRESS_BIND",
     "clientApiGatewayBaseUrl": "VITE_SDKWORK_GITHUB_WORKFLOW_PLATFORM_API_GATEWAY_HTTP_URL",

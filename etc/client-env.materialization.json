@@ -3,6 +3,12 @@
   "kind": "sdkwork.client-env-materialization",
   "application": "sdkwork-github-workflow",
   "command": "pnpm workflow:materialize-client-env",
+  "profiles": [
+    "standalone.development",
+    "standalone.production",
+    "cloud.development",
+    "cloud.production"
+  ],
   "sourceIdentity": {
     "deploymentProfileKeys": [
       "SDKWORK_DEPLOYMENT_PROFILE"
