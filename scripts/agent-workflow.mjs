@@ -2275,7 +2275,10 @@ async function resolveEvidenceSourceCommit(settings, env = process.env) {
 }
 
 function resolvePackageVersion(config, { version = null, releaseTag = null } = {}) {
-  return version || normalizeReleaseVersion(releaseTag) || config.release.defaultVersion || null;
+  // A tag push passes the raw tag (for example v1.2.3) as the version input;
+  // normalize it so SDKWORK_PACKAGE_VERSION and the rendered artifact names
+  // always carry the pure semantic version the packaging commands enforce.
+  return normalizeReleaseVersion(version) || normalizeReleaseVersion(releaseTag) || config.release.defaultVersion || null;
 }
 
 function createWorkflowSummary(config, matrix, { version = null, releaseTag = null } = {}) {

@@ -1607,6 +1607,11 @@ test('resolves package version from release tag before default version', async (
   const summary = createWorkflowSummary(config, matrix, { version: '', releaseTag: 'refs/tags/v2.0.0' });
   assert.equal(summary.version, '2.0.0');
 
+  // A tag push passes the raw tag name as the version input; the planner
+  // normalizes it to the pure semantic version packaging commands enforce.
+  const rawTagSummary = createWorkflowSummary(config, matrix, { version: 'v2.0.0', releaseTag: 'v2.0.0' });
+  assert.equal(rawTagSummary.version, '2.0.0');
+
   const lifecycle = createLifecyclePlan(config, {
     phase: 'build',
     matrixItem: matrix.include[0],
