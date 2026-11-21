@@ -21,6 +21,14 @@ const PACKAGE_TEMPLATE = path.join(TEMPLATE_DIRECTORY, 'app-package.workflow.yml
 const VERIFY_TEMPLATE = path.join(TEMPLATE_DIRECTORY, 'app-verify.workflow.yml');
 const DEFAULT_FRAMEWORK_REF = 'v1';
 
+// GitHub parses a workflow file only when every `workflow_dispatch` event fits
+// the platform limit of 25 inputs; one input over the limit rejects the whole
+// file, so every trigger of the entrypoint fails before any job starts. The
+// renderer must therefore keep the injected dependency ref inputs inside that
+// budget and fall back to repository variables when a configuration declares
+// more refs than fit.
+const MAX_WORKFLOW_DISPATCH_INPUTS = 25;
+
 function pinFrameworkRef(template, workflow, frameworkRef) {
   return template
     .replaceAll(`sdkwork-ai/sdkwork-github-workflow/.github/workflows/${workflow}@v1`, `sdkwork-ai/sdkwork-github-workflow/.github/workflows/${workflow}@${frameworkRef}`)
@@ -32,6 +40,9 @@ function pinFrameworkRef(template, workflow, frameworkRef) {
  *
  * `refInput` is the repository-variable name (`SDKWORK_CORE_REF`); the dispatch
  * input is its lower-case form, and a blank input falls back to the variable.
+ * A configuration whose ref count cannot fit the GitHub dispatch-input limit
+ * renders no per-ref dispatch inputs at all: its refs resolve from the
+ * repository variables only.
  * @param {object} config - Parsed `agent.workflow.json`.
  * @returns {string[]} Declared ref input names, de-duplicated in declaration order.
  */
@@ -45,6 +56,27 @@ export function dependencyRefInputs(config) {
     }
   }
   return names;
+}
+
+/**
+ * Count the `workflow_dispatch` inputs the package template declares itself.
+ *
+ * The template string is already the renderer's source of truth for every other
+ * wiring, so the budget check reads the same text instead of a second constant
+ * that could drift. Dispatch input keys are the six-space-indented names inside
+ * the template's `workflow_dispatch` block; the block ends at the next line
+ * indented less than four spaces.
+ * @param {string} packageTemplate - Raw package template text.
+ * @returns {number} Template-owned dispatch input count.
+ */
+function countTemplateDispatchInputs(packageTemplate) {
+  const marker = '  workflow_dispatch:\n';
+  const start = packageTemplate.indexOf(marker);
+  if (start === -1) return 0;
+  const body = packageTemplate.slice(start + marker.length);
+  const boundary = /^ {1,3}\S.*$/mu.exec(body);
+  const block = boundary ? body.slice(0, boundary.index) : body;
+  return [...block.matchAll(/^ {6}[a-z_]+:\s*$/gmu)].length;
 }
 
 /**
@@ -69,26 +101,39 @@ export function renderAppWorkflows({ packageTemplate, verifyTemplate, frameworkR
   }
   if (refInputs.length === 0) return { packageWorkflow, verifyWorkflow };
 
-  const dispatchInputs = refInputs
-    .map((refInput) => [
-      `      ${refInput.toLowerCase()}:`,
-      `        description: '${refInput} dependency ref; blank falls back to the repository variable.'`,
-      '        required: false',
-      "        default: ''",
-    ].join('\n'))
-    .join('\n');
-  const withInputs = packageWorkflow.replace(/\npermissions:\n/u, `\n${dispatchInputs}\n\npermissions:\n`);
-  if (withInputs === packageWorkflow) {
-    throw new Error('package template has no dispatch-input insertion point before permissions:');
-  }
+  // Per-ref dispatch inputs exist only while they fit the platform budget: a
+  // configuration with more refs than fit renders no per-ref inputs at all and
+  // resolves every ref from its repository variable. Injecting a partial,
+  // declaration-order subset would make the override surface depend on the
+  // declaration order of an unrelated configuration list.
+  const refInputBudget = MAX_WORKFLOW_DISPATCH_INPUTS - countTemplateDispatchInputs(packageTemplate);
+  const dispatchableRefs = refInputs.length <= refInputBudget ? refInputs : [];
 
   const entries = refInputs.map((refInput) => {
+    if (dispatchableRefs.length === 0) {
+      return `          "${refInput}": "\${{ vars.${refInput} }}"`;
+    }
     const input = refInput.toLowerCase();
     return `          "${refInput}": "\${{ github.event.inputs.${input} || vars.${refInput} }}"`;
   });
   const block = /( +)dependency_refs_json: >-\n[\s\S]*?(?=\n    secrets:)/u;
-  if (!block.test(withInputs)) {
+  if (!block.test(packageWorkflow)) {
     throw new Error('package template has no dependency_refs_json block to render');
+  }
+  let withInputs = packageWorkflow;
+  if (dispatchableRefs.length > 0) {
+    const dispatchInputs = dispatchableRefs
+      .map((refInput) => [
+        `      ${refInput.toLowerCase()}:`,
+        `        description: '${refInput} dependency ref; blank falls back to the repository variable.'`,
+        '        required: false',
+        "        default: ''",
+      ].join('\n'))
+      .join('\n');
+    withInputs = packageWorkflow.replace(/\npermissions:\n/u, `\n${dispatchInputs}\n\npermissions:\n`);
+    if (withInputs === packageWorkflow) {
+      throw new Error('package template has no dispatch-input insertion point before permissions:');
+    }
   }
   const rendered = withInputs.replace(
     block,

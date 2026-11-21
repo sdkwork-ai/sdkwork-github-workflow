@@ -104,3 +104,31 @@ test('renders one repository from its configuration and reports no change on the
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('keeps per-ref dispatch inputs inside the GitHub dispatch-input limit', () => {
+  // The template declares ten of its own dispatch inputs, so fifteen refs are
+  // the last count that fits the platform limit of 25 inputs per file.
+  const refs = Array.from({ length: 15 }, (_, index) => `SDKWORK_REF_${index}_REF`);
+  const atBudget = renderAppWorkflows({ ...templates, refInputs: refs });
+  for (const refInput of refs) {
+    assert.match(atBudget.packageWorkflow, new RegExp(`^ {6}${refInput.toLowerCase()}:$`, 'mu'));
+  }
+
+  // One ref more cannot fit. GitHub rejects the whole file — every trigger of
+  // the entrypoint fails before any job starts — so the renderer must stop
+  // injecting per-ref inputs and resolve every ref from its repository variable.
+  const overBudget = renderAppWorkflows({
+    ...templates,
+    refInputs: [...refs, 'SDKWORK_REF_15_REF'],
+  });
+  assert.doesNotMatch(overBudget.packageWorkflow, /^ {6}sdkwork_ref_\d+_ref:$/mu);
+  assert.doesNotMatch(overBudget.packageWorkflow, /github\.event\.inputs\.sdkwork_ref/u);
+  assert.match(
+    overBudget.packageWorkflow,
+    /"SDKWORK_REF_15_REF": "\$\{\{ vars\.SDKWORK_REF_15_REF \}\}"/u,
+  );
+  assert.match(
+    overBudget.packageWorkflow,
+    /"SDKWORK_REF_0_REF": "\$\{\{ vars\.SDKWORK_REF_0_REF \}\}"/u,
+  );
+});
